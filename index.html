@@ -847,7 +847,10 @@ function saveProfile() {
   localStorage.setItem("profileName", name);
   localStorage.setItem("profileLocation", location);
   localStorage.setItem("profileAge", age);
+
+  // Firestoreにデータを保存する
   saveUserProfileToServer();
+
   alert("保存しました！");
 }
 // サーバーにプロフィール情報を保存する関数（Firebase Firestoreへ直接保存）
