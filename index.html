@@ -389,15 +389,11 @@
     }
   </style>
 <!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyC5Rs3NfKtTFS5zxd5qNvSJ6sYARGBeA44",
     authDomain: "peerchat-70fab.firebaseapp.com",
@@ -408,31 +404,17 @@
     measurementId: "G-62FX7BNBK6"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  // Expose db and auth to window for use in other scripts
-  window.db = db;
-  window.auth = auth;
-  window.firebase_firestore = {
-    collection,
-    addDoc,
-    serverTimestamp,
-    // The following are needed for other usages in the app
-    query: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).query,
-    where: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).where,
-    orderBy: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).orderBy,
-    onSnapshot: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).onSnapshot
-  };
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
 
   // 検索投稿をFirestoreに保存
   window.postSearch = async function(content, userId) {
     try {
-      await addDoc(collection(db, "searchPosts"), {
+      await db.collection("searchPosts").add({
         content: content,
         userId: userId,
-        createdAt: serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     } catch (e) {
       console.error("投稿に失敗しました", e);
@@ -1351,49 +1333,25 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
   // --- 検索投稿一覧 Firestoreリアルタイム表示 ---
+  // Firestoreから投稿一覧をリアルタイムで取得・表示
   function setupSearchPostRealtimeListener() {
-    if (!window.db || !window.firebase_firestore || !window.firebase_firestore.collection) {
-      setTimeout(setupSearchPostRealtimeListener, 100);
-      return;
-    }
-    const { collection, query, orderBy, onSnapshot } = window.firebase_firestore;
-    const q = query(
-      collection(window.db, "posts"),
-      orderBy("createdAt")
-    );
-    onSnapshot(q, (snapshot) => {
-      const container = document.getElementById("search-post-list");
-      if (!container) return;
-      // 右下FAB以外を消してから再描画
-      // 残すのはFABのみ（position:fixedのdiv）
-      Array.from(container.children).forEach(child => {
-        if (!child.style || child.style.position !== "fixed") {
-          container.removeChild(child);
-        }
-      });
+    db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+      const postContainer = document.getElementById("postContainer");
+      if (!postContainer) return;
+      postContainer.innerHTML = "";
       snapshot.forEach(doc => {
         const data = doc.data();
-        const postCard = document.createElement("div");
-        postCard.className = "thread-card";
-        // ユーザー名
-        let userName = data.userName || "匿名";
-        if (userName === undefined || userName === null || userName === "") userName = "未設定";
-        // 投稿日時
-        let dateStr = "";
-        if (data.createdAt && data.createdAt.toDate) {
-          const d = data.createdAt.toDate();
-          dateStr = d.getFullYear() + "/" + ("0"+(d.getMonth()+1)).slice(-2) + "/" + ("0"+d.getDate()).slice(-2);
-        }
-        postCard.innerHTML = `
-          <div style="display: flex; align-items: center;">
-            <img src="./noimage.png" alt="アイコン" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-right: 12px; background-color: #444;">
-            <div>
-              <div class="meta">${userName}・${dateStr}</div>
-              <div class="content">${data.title ? data.title + "<br>" : ""}${data.content || ""}</div>
-            </div>
+        const post = document.createElement("div");
+        post.className = "post";
+        post.innerHTML = `
+          <div class="post-header">
+            <img src="${data.avatar || 'noimage.png'}" alt="avatar" class="avatar">
+            <span>${data.username}</span>
+            <span class="date">${new Date(data.timestamp?.toDate()).toLocaleString()}</span>
           </div>
+          <p class="post-text">${data.text}</p>
         `;
-        container.appendChild(postCard);
+        postContainer.appendChild(post);
       });
     });
   }
@@ -1507,3 +1465,5 @@ document.getElementById("thread").addEventListener("show", updateThreadListHeade
     }
   });
 </script>
+<!-- 投稿表示用のコンテナがなければ追加 -->
+<div id="postContainer"></div>
