@@ -317,8 +317,7 @@
     <header>
       <h1>検索</h1>
     </header>
-    <div class="section" id="search-post-list">
-      <!-- 投稿一覧がここにリアルタイムで表示される -->
+    <div class="section">
       <div style="position: fixed; bottom: 70px; right: 20px;">
         <div onclick="openPostPopup()" style="width: 56px; height: 56px; background-color: #ff4081; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); cursor: pointer;">
           <span style="font-size: 24px; color: white;">✎</span>
@@ -340,8 +339,10 @@
         <h1 class="header-title" id="header-title" style="text-align: center;">スレッド一覧</h1>
       </header>
       <div id="thread-list" style="display:block;">
-        <div class="thread-list" id="thread-list-inner">
-          <!-- スレッド一覧カードがここに追加される -->
+        <div class="thread-list">
+          <div id="thread-list">
+            <!-- スレッド一覧カードがここに追加される -->
+          </div>
         </div>
       </div>
       <!-- 右下の＋ボタン -->
@@ -388,42 +389,9 @@
       z-index: 100;
     }
   </style>
-<!-- Firebase CDN (compat version for global firebase.* usage) -->
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyC5Rs3NfKtTFS5zxd5qNvSJ6sYARGBeA44",
-    authDomain: "peerchat-70fab.firebaseapp.com",
-    projectId: "peerchat-70fab",
-    storageBucket: "peerchat-70fab.appspot.com",
-    messagingSenderId: "797423757401",
-    appId: "1:797423757401:web:7df091b3f0c9a1e581e948",
-    measurementId: "G-62FX7BNBK6"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
-
-  // 検索投稿をFirestoreに保存
-  window.postSearch = async function(content, userId) {
-    try {
-      await db.collection("searchPosts").add({
-        content: content,
-        userId: userId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } catch (e) {
-      console.error("投稿に失敗しました", e);
-    }
-  }
-</script>
 <script>
 // ---------------------- スレッド一覧・グループチャット機能 ----------------------
-// スレッド一覧 Firestoreリアルタイム化に備えたlocalStorage fallback
+// スレッド一覧はlocalStorageで全ユーザー共通
 const THREADS_KEY = "peerchat_threads_v1";
 const THREAD_MESSAGES_KEY = "peerchat_thread_messages_v1";
 function getThreads() {
@@ -446,14 +414,11 @@ function getThreadMessages() {
 function saveThreadMessages(msgs) {
   localStorage.setItem(THREAD_MESSAGES_KEY, JSON.stringify(msgs));
 }
-// Firestoreリアルタイムでスレッド一覧を取得して描画
-let threadListUnsubscribe = null;
-function renderThreadList(threads) {
-  // threads: [{id, name, desc, authorName, createdAt}]
-  const list = document.getElementById("thread-list-inner") || document.getElementById("thread-list");
-  if (!list) return;
+function renderThreadList() {
+  const threads = getThreads();
+  const list = document.getElementById("thread-list");
   list.innerHTML = "";
-  if (!threads || !threads.length) {
+  if (!threads.length) {
     const none = document.createElement("div");
     none.style.color = "#aaa";
     none.style.textAlign = "center";
@@ -620,49 +585,29 @@ function appendThreadMessageBubble(sender, message, userPhotoUrl, senderName, ti
   }
   container.appendChild(row);
 }
-// Firestoreでスレッドメッセージを保存
-async function sendThreadMessage() {
+function sendThreadMessage() {
   const input = document.getElementById("thread-input-text");
   const text = input.value.trim();
   if (!text || !currentThreadId) return;
-  // Firebase Firestoreに保存
-  try {
-    // Importが必要な場合、グローバルwindowオブジェクトから取得
-    const { addDoc, collection, serverTimestamp } = window.firebase_firestore || {};
-    const db = window.db;
-    const auth = window.auth;
-    let currentUserID = localStorage.getItem("myUserId") || "anonymous";
-    await addDoc(collection(db, "messages"), {
-      text: text,
-      sender: currentUserID,
-      threadId: currentThreadId,
-      createdAt: serverTimestamp()
-    });
-    input.value = "";
-    // FirestoreのonSnapshotで自動反映するのが理想
-    renderThreadMessages();
-    scrollThreadToBottom();
-  } catch (e) {
-    // Fallback: localStorage保存（オフライン時やエラー時）
-    const now = new Date();
-    const timeString = now.getFullYear() + "/" + ("0"+(now.getMonth()+1)).slice(-2) + "/" + ("0"+now.getDate()).slice(-2) + " " + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2);
-    const myName = localStorage.getItem("profileName") || "匿名";
-    const myIcon = getMyUserIcon();
-    const myId = localStorage.getItem("myUserId") || "anonymous";
-    const threadMsgs = getThreadMessages();
-    if (!threadMsgs[currentThreadId]) threadMsgs[currentThreadId] = [];
-    threadMsgs[currentThreadId].push({
-      senderId: myId,
-      senderName: myName,
-      senderIcon: myIcon,
-      text: text,
-      time: timeString
-    });
-    saveThreadMessages(threadMsgs);
-    input.value = "";
-    renderThreadMessages();
-    scrollThreadToBottom();
-  }
+  const now = new Date();
+  const timeString = now.getFullYear() + "/" + ("0"+(now.getMonth()+1)).slice(-2) + "/" + ("0"+now.getDate()).slice(-2) + " " + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2);
+  const myName = localStorage.getItem("profileName") || "匿名";
+  const myIcon = getMyUserIcon();
+  const myId = getMyUserId();
+  // 保存
+  const threadMsgs = getThreadMessages();
+  if (!threadMsgs[currentThreadId]) threadMsgs[currentThreadId] = [];
+  threadMsgs[currentThreadId].push({
+    senderId: myId,
+    senderName: myName,
+    senderIcon: myIcon,
+    text: text,
+    time: timeString
+  });
+  saveThreadMessages(threadMsgs);
+  input.value = "";
+  renderThreadMessages();
+  scrollThreadToBottom();
 }
 function scrollThreadToBottom() {
   setTimeout(() => {
@@ -680,7 +625,7 @@ function getMyUserId() {
   return id;
 }
 
-// スレッド画面表示時: Firestoreリアルタイムリスナー
+// スレッド画面表示時
 document.getElementById("thread").addEventListener("show", function() {
   document.getElementById("thread-list").style.display = "block";
   document.getElementById("thread-fab").style.display = "flex";
@@ -688,42 +633,7 @@ document.getElementById("thread").addEventListener("show", function() {
   // Show スレッド一覧 header
   var threadListHeader = document.getElementById("thread-list-header");
   if (threadListHeader) threadListHeader.style.display = "block";
-  // Firestore threadsコレクションをリアルタイム購読
-  function setupThreadRealtimeListener() {
-    // 既存リスナー解除
-    if (threadListUnsubscribe) {
-      threadListUnsubscribe();
-      threadListUnsubscribe = null;
-    }
-    if (!window.db || !window.firebase_firestore || !window.firebase_firestore.collection) {
-      setTimeout(setupThreadRealtimeListener, 100);
-      return;
-    }
-    const { collection, query, orderBy, onSnapshot } = window.firebase_firestore;
-    const q = query(
-      collection(window.db, "threads"),
-      orderBy("createdAt")
-    );
-    threadListUnsubscribe = onSnapshot(q, (snapshot) => {
-      const threads = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        threads.push({
-          id: doc.id,
-          name: data.name,
-          desc: data.desc,
-          authorName: data.authorName,
-          createdAt: data.createdAt && data.createdAt.toDate
-            ? (data.createdAt.toDate().getFullYear() + "/" +
-                ("0"+(data.createdAt.toDate().getMonth()+1)).slice(-2) + "/" +
-                ("0"+data.createdAt.toDate().getDate()).slice(-2))
-            : ""
-        });
-      });
-      renderThreadList(threads);
-    });
-  }
-  setupThreadRealtimeListener();
+  renderThreadList();
 });
 // FAB/モーダルの外クリックで閉じる
 document.addEventListener("mousedown", function(e) {
@@ -913,6 +823,7 @@ window.onload = function () {
 
 function registerUser() {
   localStorage.setItem("isRegistered", true);
+  saveUserProfileToServer();
   showScreen('home-screen');
   loadProfileImage();
 }
@@ -936,7 +847,33 @@ function saveProfile() {
   localStorage.setItem("profileName", name);
   localStorage.setItem("profileLocation", location);
   localStorage.setItem("profileAge", age);
+  saveUserProfileToServer();
   alert("保存しました！");
+}
+// サーバーにプロフィール情報を保存する関数（Firebase Firestoreへ直接保存）
+import { db } from './firebase.js';
+import { doc, setDoc } from 'firebase/firestore';
+
+async function saveUserProfileToServer() {
+  const name = document.getElementById("profile-name")?.value || localStorage.getItem("profileName") || "";
+  const location = document.getElementById("profile-location")?.value || localStorage.getItem("profileLocation") || "";
+  const age = document.getElementById("profile-age")?.value || localStorage.getItem("profileAge") || "";
+  const image = localStorage.getItem("profileImage") || "";
+
+  const userId = localStorage.getItem("myUserId");
+  if (!userId) return;
+
+  try {
+    await setDoc(doc(db, "users", userId), {
+      name,
+      location,
+      age,
+      image
+    });
+    console.log("Firestoreに保存しました");
+  } catch (error) {
+    console.error("Firestore保存失敗:", error);
+  }
 }
 
 function loadProfile() {
@@ -1004,12 +941,6 @@ function submitPost() {
   document.querySelector("#search .section").appendChild(postCard);
   document.getElementById("post-popup").style.display = "none";
   document.getElementById("post-content").value = "";
-
-  // Firebaseに投稿を保存
-  const userId = localStorage.getItem("myUserId") || "anonymous";
-  if (window.postSearch) {
-    window.postSearch(content, userId);
-  }
 }
 
 function showUserProfile() {
@@ -1043,40 +974,8 @@ function startMessageWithUser(userName) {
   `;
 }
 
-// --- Firestore チャットメッセージのリアルタイム取得 ---
-// Firestore 9.22.2 SDKの import (すでに初期化済み)
-// dbは <script type="module"> 内で宣言済み。window.dbへもexportする
-document.addEventListener("DOMContentLoaded", function() {
-  // Firebase Firestoreの必要な関数をwindowへエクスポート
-  if (window.db) {
-    // すでにmoduleスコープでdbは定義済み
-  } else if (typeof getFirestore !== "undefined" && typeof initializeApp !== "undefined") {
-    // もしwindow.dbが無ければ再初期化
-    const app = initializeApp(firebaseConfig);
-    window.db = getFirestore(app);
-  }
-  // Firestoreから取得に必要な関数をwindowにエクスポート
-  if (typeof window.firebase_firestore === "undefined") {
-    window.firebase_firestore = {};
-    // Firestoreの必要メソッドだけimport
-    import('https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js').then(mod => {
-      window.firebase_firestore = {
-        collection: mod.collection,
-        query: mod.query,
-        where: mod.where,
-        orderBy: mod.orderBy,
-        onSnapshot: mod.onSnapshot,
-        addDoc: mod.addDoc,
-        serverTimestamp: mod.serverTimestamp
-      };
-    });
-  }
-});
-
-let currentChatUserId = null;
-let chatUnsubscribe = null;
-
-// ユーザー情報（仮）: Firestoreでユーザーリスト管理する場合はここを書き換える
+// --- Chat Data Mockup ---
+// --- 初期化用のダミーユーザーデータ ---
 const users = [
   {
     id: "yuko",
@@ -1101,16 +1000,24 @@ const users = [
   }
 ];
 
+// チャットルーム一覧に初期表示用のサンプルデータ
+const messages = {
+  "yuko": [{ sender: "yuko", text: "こんにちは！" }],
+  "takashi": [{ sender: "takashi", text: "やあ！" }],
+  "mayu": [{ sender: "mayu", text: "よろしくね〜" }]
+};
+
+let currentChatUserId = null;
+let currentChatUserIndex = null;
+
 function getUserIcon(user) {
   if (user.icon && user.icon !== "") return user.icon;
-  // 壊れたURLを空 or noimage.png に
-  if (
-    user.icon === "https://firebasestorage.googleapis.com/v0/b/picsoblender.com/404" ||
-    user.icon === "https://firebasestorage.googleapis.com/v0/b/picsoblender.com/o/404"
-  ) {
-    return "noimage.png";
-  }
   return "./noimage.png";
+}
+
+function getLastMessage(userId) {
+  if (!messages[userId] || messages[userId].length === 0) return "";
+  return messages[userId][messages[userId].length - 1].text;
 }
 
 function renderChatList() {
@@ -1158,7 +1065,7 @@ function renderChatList() {
     lastMessage.style.whiteSpace = "nowrap";
     lastMessage.style.overflow = "hidden";
     lastMessage.style.textOverflow = "ellipsis";
-    lastMessage.innerText = ""; // Firestore化後は最新メッセージを取得して表示したい
+    lastMessage.innerText = getLastMessage(user.id) || "まだメッセージがありません";
 
     contentWrapper.appendChild(name);
     contentWrapper.appendChild(lastMessage);
@@ -1179,9 +1086,7 @@ function openChatWithUser(userId) {
   if (!user) return;
   document.getElementById("chat-partner-name").innerText = user.name;
   document.getElementById("chat-partner-icon").src = getUserIcon(user);
-
-  // Firestore: メッセージリアルタイム取得
-  setupChatRealtimeListener(userId);
+  renderChatMessages();
   scrollChatToBottom();
 }
 
@@ -1189,10 +1094,6 @@ function closeChatRoom() {
   document.getElementById("chatroom-list-section").style.display = "block";
   document.getElementById("chatroom-room-section").style.display = "none";
   currentChatUserId = null;
-  if (chatUnsubscribe) {
-    chatUnsubscribe();
-    chatUnsubscribe = null;
-  }
   renderChatList();
 }
 
@@ -1202,60 +1103,17 @@ function getMyUserIcon() {
   return savedImage || "./noimage.png";
 }
 
-// Firestoreからメッセージをリアルタイムで取得し描画
-function setupChatRealtimeListener(userId) {
-  // 既存のリスナーを解除
-  if (chatUnsubscribe) {
-    chatUnsubscribe();
-    chatUnsubscribe = null;
-  }
-  // Firestore SDKロードを待つ
-  function startListener() {
-    if (!window.db || !window.firebase_firestore || !window.firebase_firestore.collection) {
-      setTimeout(() => startListener(), 100);
-      return;
-    }
-    const {
-      collection, query, where, orderBy, onSnapshot
-    } = window.firebase_firestore;
-    // チャット相手とのスレッドID生成(例: user1_user2, 小さい順で結合)
-    const myId = getMyUserId();
-    const chatIds = [myId, userId].sort();
-    const threadId = chatIds.join("_");
-    // クエリ作成
-    const q = query(
-      collection(window.db, "messages"),
-      where("threadId", "==", threadId),
-      orderBy("createdAt")
-    );
-    chatUnsubscribe = onSnapshot(q, (snapshot) => {
-      const messages = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        messages.push({
-          sender: data.sender,
-          text: data.text,
-          time: data.createdAt && data.createdAt.toDate
-            ? formatTime(data.createdAt.toDate())
-            : "",
-        });
-      });
-      renderMessages(messages, userId);
-      scrollChatToBottom();
-    });
-  }
-  startListener();
-}
-
-// メッセージ配列を描画
-function renderMessages(messagesArr, chatUserId) {
+function renderChatMessages() {
   const container = document.getElementById("chat-messages");
   if (!container) return;
   container.innerHTML = "";
-  const user = users.find(u => u.id === chatUserId);
-  messagesArr.forEach(msg => {
+  if (!currentChatUserId) return;
+  const user = users.find(u => u.id === currentChatUserId);
+  if (!user) return;
+  const msgs = messages[currentChatUserId] || [];
+  msgs.forEach(msg => {
     let senderType, avatarUrl;
-    if (msg.sender === chatUserId) {
+    if (msg.sender === currentChatUserId) {
       senderType = "other";
       avatarUrl = getUserIcon(user);
     } else {
@@ -1266,37 +1124,22 @@ function renderMessages(messagesArr, chatUserId) {
   });
 }
 
-// Firestoreにメッセージ送信
-async function sendChatMessage() {
+function sendChatMessage() {
   const input = document.getElementById("chat-input-text");
   const text = input.value.trim();
   if (!text || !currentChatUserId) return;
-  // Firestoreへ保存
-  function send() {
-    const { addDoc, collection, serverTimestamp } = window.firebase_firestore || {};
-    const db = window.db;
-    const myId = getMyUserId();
-    // チャット相手とのスレッドID生成
-    const chatIds = [myId, currentChatUserId].sort();
-    const threadId = chatIds.join("_");
-    addDoc(collection(db, "messages"), {
-      text: text,
-      sender: myId,
-      threadId: threadId,
-      createdAt: serverTimestamp()
-    }).then(() => {
-      input.value = "";
-      // FirestoreのonSnapshotで自動反映
-      scrollChatToBottom();
-    }).catch(e => {
-      alert("送信に失敗しました: " + e);
-    });
-  }
-  if (!window.db || !window.firebase_firestore || !window.firebase_firestore.addDoc) {
-    setTimeout(() => sendChatMessage(), 100);
-    return;
-  }
-  send();
+  const now = new Date();
+  const timeString = now.getFullYear() + "/" + ("0"+(now.getMonth()+1)).slice(-2) + "/" + ("0"+now.getDate()).slice(-2) + " " + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2);
+  // push to messages
+  if (!messages[currentChatUserId]) messages[currentChatUserId] = [];
+  messages[currentChatUserId].push({
+    sender: "me",
+    text: text,
+    time: timeString
+  });
+  input.value = "";
+  appendMessageBubble("me", text, getMyUserIcon(), timeString);
+  scrollChatToBottom();
 }
 
 function scrollChatToBottom() {
@@ -1304,23 +1147,6 @@ function scrollChatToBottom() {
     const container = document.getElementById("chat-messages");
     if (container) container.scrollTop = container.scrollHeight;
   }, 50);
-}
-
-function getMyUserId() {
-  // シンプルなユーザーID（端末ごと）
-  let id = localStorage.getItem("myUserId");
-  if (!id) {
-    id = "me_" + Math.random().toString(36).slice(2,10);
-    localStorage.setItem("myUserId", id);
-  }
-  return id;
-}
-
-function formatTime(dateObj) {
-  if (!(dateObj instanceof Date)) return "";
-  const h = ("0" + dateObj.getHours()).slice(-2);
-  const m = ("0" + dateObj.getMinutes()).slice(-2);
-  return h + ":" + m;
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -1339,30 +1165,6 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
   }
-  // --- 検索投稿一覧 Firestoreリアルタイム表示 ---
-  // Firestoreから投稿一覧をリアルタイムで取得・表示
-  function setupSearchPostRealtimeListener() {
-    db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-      const postContainer = document.getElementById("postContainer");
-      if (!postContainer) return;
-      postContainer.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const post = document.createElement("div");
-        post.className = "post";
-        post.innerHTML = `
-          <div class="post-header">
-            <img src="${data.avatar || 'noimage.png'}" alt="avatar" class="avatar">
-            <span>${data.username}</span>
-            <span class="date">${new Date(data.timestamp?.toDate()).toLocaleString()}</span>
-          </div>
-          <p class="post-text">${data.text}</p>
-        `;
-        postContainer.appendChild(post);
-      });
-    });
-  }
-  setupSearchPostRealtimeListener();
 });
 
 // When switching to chatroom, always show the list UI
@@ -1370,12 +1172,9 @@ document.getElementById("chatroom").addEventListener("show", function() {
   document.getElementById("chatroom-list-section").style.display = "block";
   document.getElementById("chatroom-room-section").style.display = "none";
   currentChatUserId = null;
-  if (chatUnsubscribe) {
-    chatUnsubscribe();
-    chatUnsubscribe = null;
-  }
   renderChatList();
 });
+// もしこのファイルが <script type="module"> でなければ、上記 import 文はエラーになります。
 </script>
 </script>
 <style>
@@ -1472,5 +1271,3 @@ document.getElementById("thread").addEventListener("show", updateThreadListHeade
     }
   });
 </script>
-<!-- 投稿表示用のコンテナがなければ追加 -->
-<div id="postContainer"></div>
