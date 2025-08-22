@@ -388,13 +388,16 @@
       z-index: 100;
     }
   </style>
-<!-- Firebase SDK 読み込み -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-  import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
-  // Firebase 設定
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyC5Rs3NfKtTFS5zxd5qNvSJ6sYARGBeA44",
     authDomain: "peerchat-70fab.firebaseapp.com",
@@ -405,10 +408,23 @@
     measurementId: "G-62FX7BNBK6"
   };
 
-  // Firebase 初期化
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
+
+  // Expose db and auth to window for use in other scripts
+  window.db = db;
+  window.auth = auth;
+  window.firebase_firestore = {
+    collection,
+    addDoc,
+    serverTimestamp,
+    // The following are needed for other usages in the app
+    query: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).query,
+    where: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).where,
+    orderBy: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).orderBy,
+    onSnapshot: (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).onSnapshot
+  };
 
   // 検索投稿をFirestoreに保存
   window.postSearch = async function(content, userId) {
