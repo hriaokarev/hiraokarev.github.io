@@ -808,7 +808,11 @@ function showScreen(screenId) {
   });
   const footer = document.querySelector("footer");
   if (footer) {
-    footer.style.display = (screenId === "registration-screen") ? "none" : "flex";
+    if (screenId === "registration-screen") {
+      footer.style.display = "none";
+    } else {
+      footer.style.display = "flex";
+    }
   }
 }
 
