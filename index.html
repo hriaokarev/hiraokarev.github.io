@@ -388,10 +388,10 @@
       z-index: 100;
     }
   </style>
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+<!-- Firebase CDN (compat version for global firebase.* usage) -->
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -404,7 +404,7 @@
     measurementId: "G-62FX7BNBK6"
   };
 
-  const app = firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   const auth = firebase.auth();
 
@@ -1103,6 +1103,13 @@ const users = [
 
 function getUserIcon(user) {
   if (user.icon && user.icon !== "") return user.icon;
+  // 壊れたURLを空 or noimage.png に
+  if (
+    user.icon === "https://firebasestorage.googleapis.com/v0/b/picsoblender.com/404" ||
+    user.icon === "https://firebasestorage.googleapis.com/v0/b/picsoblender.com/o/404"
+  ) {
+    return "noimage.png";
+  }
   return "./noimage.png";
 }
 
