@@ -1,6 +1,8 @@
 import { db, auth } from "./firebase.js";
 import { collection, addDoc, query, orderBy, getDocs, getDoc, doc, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
+const loadedPostIds = new Set();
+
 function openPostPopup() {
   document.getElementById("post-popup").style.display = "flex";
 }
@@ -28,17 +30,21 @@ async function submitPost() {
 
 function loadSearchPosts() {
   const section = document.querySelector("#search .section") || document.getElementById("search");
-  section.innerHTML = "";
 
+  // Query is explicitly sorted by descending createdAt to ensure newest posts appear first
   const q = query(
     collection(db, "searchPosts"),
-    orderBy("createdAt", "desc"),
+    orderBy("createdAt", "desc"), // Important: 'desc' puts newest posts at the top
     limit(20)
   );
 
   onSnapshot(q, async (querySnapshot) => {
     for (const change of querySnapshot.docChanges()) {
       if (change.type === "added") {
+        const docId = change.doc.id;
+        if (loadedPostIds.has(docId)) continue;
+        loadedPostIds.add(docId);
+
         const data = change.doc.data();
         const postCard = document.createElement("div");
         postCard.className = "thread-card";
@@ -61,8 +67,10 @@ function loadSearchPosts() {
           <div class="content">${data.content}</div>
         `;
 
-        const section = document.querySelector("#search .section") || document.getElementById("search");
-        section.prepend(postCard);
+        // Use setTimeout to queue DOM update, avoiding layout thrashing and ensuring prepend order
+        setTimeout(() => {
+          section.prepend(postCard);
+        }, 0);
       }
     }
   });
