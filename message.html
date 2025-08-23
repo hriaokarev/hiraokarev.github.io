@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>個別チャット</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">メッセージ</header>
+  <main class="message-room">
+    <div class="message-container" id="messageContainer">
+      <!-- チャットバブルがここに追加される -->
+    </div>
+    <div class="message-input">
+      <input type="text" id="messageInput" placeholder="メッセージを入力..." />
+      <button onclick="sendMessage()">送信</button>
+    </div>
+  </main>
+  <script src="message.js"></script>
+</body>
+</html>
