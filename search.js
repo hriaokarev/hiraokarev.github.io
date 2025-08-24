@@ -29,6 +29,28 @@ async function submitPost() {
 }
 
 function loadSearchPosts() {
+  const cachedPosts = JSON.parse(localStorage.getItem("cachedSearchPosts") || "[]");
+  cachedPosts.slice().reverse().forEach((data) => {
+    if (loadedPostIds.has(data.id)) return;
+    if (document.querySelector(`[data-post-id="${data.id}"]`)) return;
+
+    loadedPostIds.add(data.id);
+
+    const section = document.querySelector("#search .section") || document.getElementById("search");
+    const postCard = document.createElement("div");
+    postCard.className = "thread-card";
+    postCard.setAttribute("data-post-id", data.id);
+
+    const createdAt = new Date(data.createdAt);
+    const userName = data.userName;
+
+    postCard.innerHTML = `
+      <div class="meta">${userName}・${createdAt.toLocaleString()}</div>
+      <div class="content">${data.content}</div>
+    `;
+    section.appendChild(postCard);
+  });
+
   const section = document.querySelector("#search .section") || document.getElementById("search");
 
   // Query is explicitly sorted by descending createdAt to ensure newest posts appear first
@@ -38,41 +60,68 @@ function loadSearchPosts() {
     limit(20)
   );
 
+  let isInitialLoad = true;
+
   onSnapshot(q, async (querySnapshot) => {
-    for (const change of querySnapshot.docChanges()) {
-      if (change.type === "added") {
-        const docId = change.doc.id;
-        if (loadedPostIds.has(docId)) continue;
-        loadedPostIds.add(docId);
+    const addedDocs = querySnapshot.docChanges()
+      .filter(change => change.type === "added");
 
-        const data = change.doc.data();
-        const postCard = document.createElement("div");
-        postCard.className = "thread-card";
+    const sortedAddedDocs = addedDocs.sort((a, b) => {
+      const timeA = a.doc.data().createdAt?.seconds || 0;
+      const timeB = b.doc.data().createdAt?.seconds || 0;
+      return timeA - timeB;
+    });
 
-        const createdAt = data.createdAt?.seconds
-          ? new Date(data.createdAt.seconds * 1000)
-          : new Date();
+    const renderedPosts = [];
+    const existingIds = new Set(renderedPosts.map(post => post.id));
 
-        let userName = "anonymous";
-        if (data.userId && data.userId !== "anonymous") {
-          const userDoc = await getDoc(doc(db, "users", data.userId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            userName = userData.name || "anonymous";
-          }
+    for (const change of sortedAddedDocs) {
+      const docId = change.doc.id;
+      if (loadedPostIds.has(docId) || existingIds.has(docId)) continue;
+      loadedPostIds.add(docId);
+
+      const data = change.doc.data();
+      const postCard = document.createElement("div");
+      postCard.className = "thread-card";
+      postCard.setAttribute("data-post-id", docId);
+
+      const createdAt = data.createdAt?.seconds
+        ? new Date(data.createdAt.seconds * 1000)
+        : new Date();
+
+      let userName = "anonymous";
+      if (data.userId && data.userId !== "anonymous") {
+        const userDoc = await getDoc(doc(db, "users", data.userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          userName = userData.name || "anonymous";
         }
-
-        postCard.innerHTML = `
-          <div class="meta">${userName}・${createdAt.toLocaleDateString()}</div>
-          <div class="content">${data.content}</div>
-        `;
-
-        // Use setTimeout to queue DOM update, avoiding layout thrashing and ensuring prepend order
-        setTimeout(() => {
-          section.prepend(postCard);
-        }, 0);
       }
+
+      postCard.innerHTML = `
+        <div class="meta">${userName}・${createdAt.toLocaleString()}</div>
+        <div class="content">${data.content}</div>
+      `;
+
+      if (isInitialLoad) {
+        section.insertBefore(postCard, section.firstChild); // Insert at top for initial load too
+      } else {
+        section.insertBefore(postCard, section.firstChild); // Newest at top
+      }
+
+      renderedPosts.push({
+        id: docId,
+        userName,
+        content: data.content,
+        createdAt: createdAt.toISOString()
+      });
     }
+
+    if (isInitialLoad) {
+      localStorage.setItem("cachedSearchPosts", JSON.stringify(renderedPosts));
+    }
+
+    isInitialLoad = false;
   });
 }
 
