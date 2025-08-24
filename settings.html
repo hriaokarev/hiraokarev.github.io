@@ -7,6 +7,21 @@
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="firebase.js"></script>
   <script type="module" src="settings.js"></script>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(function (registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(function (error) {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+  </script>
 </head>
 <body style="background-color: #000000; color: white; margin: 0; font-family: sans-serif;">
   <header style="background-color: #111111; color: white; padding: 12px; text-align: center; font-size: 18px; font-weight: bold;">

@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" manifest="manifest.json">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121212" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="icon" type="image/png" href="/icon-512.png" />
+  <link rel="manifest" href="manifest.json" />
   <style>
     body {
       margin: 0;
@@ -65,6 +69,17 @@
   </style>
   <title>スレッド一覧</title>
 </head>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js').then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    });
+  }
+</script>
 <body>
   <header>スレッド一覧</header>
   <div id="thread-list"></div>

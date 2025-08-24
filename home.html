@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<html><head>
+<html lang="ja"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>ホーム画面</title>
+<link rel="manifest" href="manifest.json" />
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log('Service worker registered.', reg))
+        .catch(err => console.error('Service worker registration failed:', err));
+    });
+  }
+</script>
 <style>
     body {
       background-color: #1e1e1e;

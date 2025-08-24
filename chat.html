@@ -68,7 +68,9 @@
       color: #aaa;
       margin-top: 4px;
     }
-  </style>
+</style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#121212" />
 </head>
 <body>
   <div class="header">チャットルーム</div>
@@ -84,6 +86,26 @@
     <div onclick="location.href='settings.html'" style="color: #bbb; font-size: 18px;">⚙️</div>
   </footer>
 
+</script>
   <script type="module" src="chat.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => {
+          console.log('Service Worker registered:', reg);
+          reg.onupdatefound = () => {
+            const newWorker = reg.installing;
+            newWorker.onstatechange = () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                if (confirm('新しいバージョンがあります。更新しますか？')) {
+                  window.location.reload();
+                }
+              }
+            };
+          };
+        })
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+  </script>
 </body>
 </html>

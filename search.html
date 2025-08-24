@@ -83,6 +83,8 @@
       border-radius: 6px;
     }
   </style>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
 </head>
 <body>
   <header>検索</header>
@@ -104,12 +106,22 @@
     <div onclick="location.href='thread.html'" style="color: #bbb; font-size: 18px;">🧵</div>
     <div onclick="location.href='settings.html'" style="color: #bbb; font-size: 18px;">⚙️</div>
   </footer>
-</body>
   <div onclick="openPostPopup()" style="position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background-color: #ff3366; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; color: white; z-index: 9999; cursor: pointer;">
     ＋
   </div>
   <!-- Add firebase.js and search.js before closing body tag -->
   <script type="module" src="./firebase.js"></script>
   <script type="module" src="./search.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(registration => {
+          console.log('ServiceWorker registered: ', registration);
+        })
+        .catch(error => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    }
+  </script>
 </body>
 </html>
