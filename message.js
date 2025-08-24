@@ -10,7 +10,7 @@ import {
   getDoc,
   onAuthStateChanged
 } from "./firebase.js";
-import { serverTimestamp as firestoreServerTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { serverTimestamp as firestoreServerTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const messageContainer = document.getElementById("messageContainer");
 const messageInput = document.getElementById("messageInput");
@@ -78,13 +78,18 @@ async function sendMessage() {
 
   try {
     await addDoc(collection(db, "privateChats", chatId, "messages"), message);
+    await setDoc(doc(db, "privateChats", chatId), {
+      updatedAt: firestoreServerTimestamp()
+    }, { merge: true });
     messageInput.value = "";
   } catch (error) {
     console.error("メッセージ送信エラー:", error);
   }
 }
 
-document.getElementById("sendBtn").addEventListener("click", sendMessage);
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("sendBtn").addEventListener("click", sendMessage);
+});
 
 async function displayMessages() {
   if (!auth.currentUser) {

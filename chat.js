@@ -6,6 +6,7 @@ import {
   onSnapshot,
   getDoc,
   doc as docRef,
+  orderBy,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
@@ -56,7 +57,8 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const q = query(
       collection(db, "privateChats"),
-      where("participants", "array-contains", user.uid)
+      where("participants", "array-contains", user.uid),
+      orderBy("updatedAt", "desc")
     );
     onSnapshot(q, (snapshot) => {
       renderChatList(snapshot.docs);

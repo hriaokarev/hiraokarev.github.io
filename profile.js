@@ -7,7 +7,8 @@ import {
   getDocs,
   query,
   where,
-  serverTimestamp
+  serverTimestamp,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -64,6 +65,9 @@ async function startPrivateChat(targetUserId, targetUserName) {
   let chatId;
   if (existingChat) {
     chatId = existingChat.id;
+    await setDoc(doc(db, "privateChats", chatId), {
+      updatedAt: serverTimestamp()
+    }, { merge: true });
   } else {
     // 新しく作成
     const newChat = await addDoc(collection(db, "privateChats"), {
@@ -79,5 +83,5 @@ async function startPrivateChat(targetUserId, targetUserName) {
   }
 
   // チャットリストページへ遷移
-  window.location.href = `chat.html`;
+  window.location.href = `message.html?chatId=${chatId}`;
 }
