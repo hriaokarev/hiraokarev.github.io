@@ -29,29 +29,10 @@ async function submitPost() {
 }
 
 function loadSearchPosts() {
-  const cachedPosts = JSON.parse(localStorage.getItem("cachedSearchPosts") || "[]");
-  cachedPosts.slice().reverse().forEach((data) => {
-    if (loadedPostIds.has(data.id)) return;
-    if (document.querySelector(`[data-post-id="${data.id}"]`)) return;
-
-    loadedPostIds.add(data.id);
-
-    const section = document.querySelector("#search .section") || document.getElementById("search");
-    const postCard = document.createElement("div");
-    postCard.className = "thread-card";
-    postCard.setAttribute("data-post-id", data.id);
-
-    const createdAt = new Date(data.createdAt);
-    const userName = data.userName;
-
-    postCard.innerHTML = `
-      <div class="meta">${userName}・${createdAt.toLocaleString()}</div>
-      <div class="content">${data.content}</div>
-    `;
-    section.appendChild(postCard);
-  });
-
   const section = document.querySelector("#search .section") || document.getElementById("search");
+
+  section.innerHTML = "";
+  loadedPostIds.clear();
 
   // Query is explicitly sorted by descending createdAt to ensure newest posts appear first
   const q = query(
@@ -63,21 +44,49 @@ function loadSearchPosts() {
   let isInitialLoad = true;
 
   onSnapshot(q, async (querySnapshot) => {
-    const addedDocs = querySnapshot.docChanges()
-      .filter(change => change.type === "added");
+    if (isInitialLoad) {
+      // Initial batch rendering
+      querySnapshot.forEach(async (docSnap) => {
+        const docId = docSnap.id;
+        if (loadedPostIds.has(docId)) return;
+        loadedPostIds.add(docId);
 
-    const sortedAddedDocs = addedDocs.sort((a, b) => {
-      const timeA = a.doc.data().createdAt?.seconds || 0;
-      const timeB = b.doc.data().createdAt?.seconds || 0;
-      return timeA - timeB;
-    });
+        const data = docSnap.data();
+        const postCard = document.createElement("div");
+        postCard.className = "thread-card";
+        postCard.setAttribute("data-post-id", docId);
 
-    const renderedPosts = [];
-    const existingIds = new Set(renderedPosts.map(post => post.id));
+        const createdAt = data.createdAt?.seconds
+          ? new Date(data.createdAt.seconds * 1000)
+          : new Date();
 
-    for (const change of sortedAddedDocs) {
+        let userName = "anonymous";
+        if (data.userId && data.userId !== "anonymous") {
+          const userDoc = await getDoc(doc(db, "users", data.userId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            userName = userData.name || "anonymous";
+          }
+        }
+
+        postCard.innerHTML = `
+          <div class="meta">${userName}・${createdAt.toLocaleString()}</div>
+          <div class="content">${data.content}</div>
+        `;
+
+        section.appendChild(postCard);
+      });
+
+      isInitialLoad = false;
+      return;
+    }
+
+    // Realtime new additions
+    querySnapshot.docChanges().forEach(async (change) => {
+      if (change.type !== "added") return;
+
       const docId = change.doc.id;
-      if (loadedPostIds.has(docId) || existingIds.has(docId)) continue;
+      if (loadedPostIds.has(docId)) return;
       loadedPostIds.add(docId);
 
       const data = change.doc.data();
@@ -103,25 +112,8 @@ function loadSearchPosts() {
         <div class="content">${data.content}</div>
       `;
 
-      if (isInitialLoad) {
-        section.insertBefore(postCard, section.firstChild); // Insert at top for initial load too
-      } else {
-        section.insertBefore(postCard, section.firstChild); // Newest at top
-      }
-
-      renderedPosts.push({
-        id: docId,
-        userName,
-        content: data.content,
-        createdAt: createdAt.toISOString()
-      });
-    }
-
-    if (isInitialLoad) {
-      localStorage.setItem("cachedSearchPosts", JSON.stringify(renderedPosts));
-    }
-
-    isInitialLoad = false;
+      section.insertBefore(postCard, section.firstChild);
+    });
   });
 }
 
