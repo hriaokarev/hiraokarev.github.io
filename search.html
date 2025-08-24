@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>検索</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: white;
+      margin: 0;
+      font-family: sans-serif;
+      min-height: 100vh;
+    }
+    header {
+      background-color: #111111;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    #search {
+      padding-bottom: 60px;
+      min-height: calc(100vh - 128px);
+    }
+    .thread-card {
+      background-color: #2c2c2c;
+      margin: 8px 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+    .meta {
+      font-size: 13px;
+      color: #bbb;
+      margin-bottom: 4px;
+    }
+    .content {
+      font-size: 16px;
+      font-weight: normal;
+      color: white;
+    }
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 8px 0;
+      background-color: #111;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid #444;
+    }
+    footer img {
+      width: 24px;
+      height: 24px;
+    }
+    #post-popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    #post-popup textarea {
+      width: 90%;
+      height: 100px;
+      margin-bottom: 20px;
+    }
+    #post-popup button {
+      width: 90%;
+      background-color: #ff3366;
+      border: none;
+      padding: 12px;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>検索</header>
+  <div id="search" class="section"></div>
+
+  <div id="post-popup">
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <textarea id="post-content" placeholder="いまどうしてる？"></textarea>
+      <button onclick="submitPost()">投稿</button>
+    </div>
+  </div>
+
+  <footer style="position: fixed; bottom: 0; width: 100%; background-color: #111111; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; align-items: center; padding: 8px 0; z-index: 9999;">
+    <div onclick="location.href='search.html'" style="color: #bbb; font-size: 18px;">🔍</div>
+    <div onclick="location.href='chat.html'" style="color: #bbb; font-size: 18px;">✉️</div>
+    <div onclick="location.href='home.html'" style="background-color: black; border-radius: 50%; padding: 6px;">
+      <div style="color: white; font-size: 20px;">🏠</div>
+    </div>
+    <div onclick="location.href='thread.html'" style="color: #bbb; font-size: 18px;">🧵</div>
+    <div onclick="location.href='settings.html'" style="color: #bbb; font-size: 18px;">⚙️</div>
+  </footer>
+</body>
+  <div onclick="openPostPopup()" style="position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background-color: #ff3366; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; color: white; z-index: 9999; cursor: pointer;">
+    ＋
+  </div>
+  <!-- Add firebase.js and search.js before closing body tag -->
+  <script type="module" src="./firebase.js"></script>
+  <script type="module" src="./search.js"></script>
+</body>
+</html>
