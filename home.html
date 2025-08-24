@@ -103,4 +103,52 @@
     window.location.href = page;
   }
 </script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      // TODO: Replace with your Firebase config
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.createThread = async function () {
+      const name = document.getElementById('thread-name-input').value.trim();
+      const desc = document.getElementById('thread-desc-input').value.trim();
+
+      if (!name) {
+        alert("スレッド名を入力してください");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "threads"), {
+          name,
+          description: desc,
+          createdAt: serverTimestamp()
+        });
+        closeThreadModal();
+        location.reload(); // Refresh to show the new thread
+      } catch (e) {
+        console.error("Error adding thread: ", e);
+        alert("スレッドの作成に失敗しました");
+      }
+    };
+
+    window.openThreadModal = function () {
+      document.getElementById('thread-modal').style.display = 'flex';
+    };
+
+    window.closeThreadModal = function () {
+      document.getElementById('thread-modal').style.display = 'none';
+    };
+  </script>
 </body></html>

@@ -1,14 +1,145 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>スレッドトークルーム</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>スレッドルーム</title>
+</head>
+<style>
+  body {
+    margin: 0;
+    background-color: #111;
+    color: #fff;
+    font-family: sans-serif;
+  }
+
+  .thread-room-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #222;
+    padding: 0.25rem 1rem;
+    font-weight: bold;
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    z-index: 10;
+  }
+
+  .back-button {
+    position: absolute;
+    left: 1rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  .messages-container {
+    padding: 1rem;
+    padding-top: 60px; /* space for fixed header */
+    height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+
+  .message-wrapper {
+    display: flex;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  .message-wrapper.right,
+  .message-wrapper.left {
+    padding: 0 1rem;
+  }
+
+  .message-wrapper.right {
+    justify-content: flex-end;
+  }
+
+  .message-wrapper.left {
+    justify-content: flex-start;
+  }
+
+  .message-bubble {
+    background-color: #1e1e1e;
+    color: #ddd;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    max-width: 70%;
+    word-break: break-word;
+  }
+
+  .message-author {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #888;
+    margin-bottom: 2px;
+  }
+
+  .message-content {
+    margin-bottom: 0.5rem;
+  }
+
+  .message-meta {
+    font-size: 0.7rem;
+    text-align: right;
+    color: #aaa;
+  }
+
+  .message-input-area {
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid #444;
+    background-color: #222;
+    padding: 0.75rem 1rem;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+  }
+
+  #thread-message-input {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #fff;
+    margin-right: 0.5rem;
+  }
+
+  #thread-send-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #e91e63;
+    color: #fff;
+    cursor: pointer;
+  }
+</style>
 </head>
 <body>
-None
-<script src="firebase.js"></script>
-<script src="threadRoom.js"></script>
+  <header class="thread-room-header">
+    <button class="back-button" onclick="history.back()">←</button>
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <h1 id="thread-room-title" style="margin: 0;">スレッド</h1>
+      <p id="thread-room-description" style="font-size: 0.75rem; color: #ccc; margin: 4px 0 0;">説明</p>
+    </div>
+  </header>
+
+  <main id="thread-messages" class="messages-container">
+    <!-- メッセージがここに追加される -->
+  </main>
+
+  <footer class="message-input-area">
+    <input id="thread-message-input" type="text" placeholder="メッセージを入力" />
+    <button id="thread-send-button">送信</button>
+  </footer>
+
+  <script type="module" src="threadRoom.js"></script>
 </body>
 </html>
