@@ -95,6 +95,28 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
+  let enterPressCount = 0;
+  let enterTimer = null;
+
+  messageInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+
+      enterPressCount++;
+
+      if (enterPressCount === 2) {
+        sendButton.click();
+        enterPressCount = 0;
+        clearTimeout(enterTimer);
+        enterTimer = null;
+      } else {
+        enterTimer = setTimeout(() => {
+          enterPressCount = 0;
+        }, 400); // reset if second Enter not pressed within 400ms
+      }
+    }
+  });
+
   if (threadId) {
     const messagesRef = collection(db, "threads", threadId, "messages");
     const messagesQuery = query(messagesRef, orderBy("createdAt", "asc"));

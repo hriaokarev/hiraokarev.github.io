@@ -70,7 +70,7 @@ function loadSearchPosts() {
         }
 
         postCard.innerHTML = `
-          <div class="meta">${userName}・${createdAt.toLocaleString()}</div>
+          <div class="meta"><span style="cursor:pointer; text-decoration:underline;" onclick="location.href='profile.html?user=${data.userId}'">${userName}</span>・${createdAt.toLocaleString()}</div>
           <div class="content">${data.content}</div>
         `;
 
@@ -108,7 +108,7 @@ function loadSearchPosts() {
       }
 
       postCard.innerHTML = `
-        <div class="meta">${userName}・${createdAt.toLocaleString()}</div>
+        <div class="meta"><span style="cursor:pointer; text-decoration:underline;" onclick="location.href='profile.html?user=${data.userId}'">${userName}</span>・${createdAt.toLocaleString()}</div>
         <div class="content">${data.content}</div>
       `;
 

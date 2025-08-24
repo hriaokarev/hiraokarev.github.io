@@ -1,26 +1,58 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const messageContainer = document.getElementById("messageContainer");
-  const messageInput = document.getElementById("messageInput");
-  const sendButton = document.getElementById("sendMessage");
+import { db, auth } from "./firebase.js";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-  sendButton.addEventListener("click", () => {
-    const text = messageInput.value.trim();
-    if (text !== "") {
-      const message = {
-        content: text,
-        timestamp: new Date().toISOString(),
-        sender: "me"
-      };
-      addMessageBubble(message);
-      messageInput.value = "";
+const messageContainer = document.getElementById("messageContainer");
+const messageInput = document.getElementById("messageInput");
+
+const urlParams = new URLSearchParams(window.location.search);
+const chatId = urlParams.get("id");
+
+function addMessageBubble(message, isMe) {
+  const div = document.createElement("div");
+  div.className = "message " + (isMe ? "me" : "other");
+  div.textContent = message.content;
+  messageContainer.appendChild(div);
+  messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
+function sendMessage() {
+  const text = messageInput.value.trim();
+  if (text === "") return;
+
+  const message = {
+    content: text,
+    userId: auth.currentUser.uid,
+    createdAt: serverTimestamp()
+  };
+
+  addDoc(collection(db, "privateChats", chatId, "messages"), message);
+  messageInput.value = "";
+}
+
+async function displayMessages() {
+  const q = query(
+    collection(db, "privateChats", chatId, "messages"),
+    orderBy("createdAt", "asc")
+  );
+  onSnapshot(q, async (snapshot) => {
+    messageContainer.innerHTML = "";
+    for (const docChange of snapshot.docs) {
+      const data = docChange.data();
+      const isMe = data.userId === auth.currentUser.uid;
+      addMessageBubble(data, isMe);
     }
   });
+}
 
-  function addMessageBubble(message) {
-    const bubble = document.createElement("div");
-    bubble.className = "chat-bubble " + (message.sender === "me" ? "me" : "other");
-    bubble.textContent = message.content;
-    messageContainer.appendChild(bubble);
-    messageContainer.scrollTop = messageContainer.scrollHeight;
-  }
-});
+displayMessages();
+
+window.sendMessage = sendMessage;

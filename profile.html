@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ユーザープロフィール</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* Removed justify-content: center; to allow header at top */
+      /* height: 100vh; Removed for natural scroll */
+    }
+
+    header {
+      width: 100%;
+      padding: 10px;
+      background-color: #222;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .profile-container {
+      text-align: center;
+      padding: 40px;
+      margin-top: 40px;
+    }
+
+    .avatar {
+      width: 100px;
+      height: 100px;
+      background-color: #333;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+    }
+
+    .info {
+      margin: 10px 0;
+    }
+
+    .message-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .message-btn:hover {
+      background-color: #1e8449;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #aaa;
+    }
+  </style>
+  <script type="module" src="./profile.js"></script>
+</head>
+<body>
+  <header>
+    <button onclick="window.history.back()" style="margin-right: 10px; padding: 5px 10px; background-color: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">← 戻る</button>
+    <h2 style="margin: 0; color: white;">ユーザープレビュー</h2>
+  </header>
+  <div class="profile-container">
+    <div class="avatar">NO IMAGE</div>
+    <div class="info" id="name">名前: あああ</div>
+    <div class="info" id="region">地域: 未設定</div>
+    <div class="info" id="age">年齢: 未設定</div>
+    <button class="message-btn" id="messageButton">このユーザーにメッセージする</button>
+    <footer>PeerChat © 2025</footer>
+  </div>
+</body>
+</html>
