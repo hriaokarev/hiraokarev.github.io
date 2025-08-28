@@ -112,8 +112,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const content = document.createElement("div");
     content.classList.add("bubble-content");
 
-    if (!isCurrentUser && message.authorName) {
-      content.innerHTML = `<strong>@${message.authorName}</strong><br>${message.content}`;
+    if (!isCurrentUser && message.authorName && message.userId) {
+      content.innerHTML = `<strong><a href="profile.html?uid=${message.userId}" style="color: inherit; text-decoration: none;">@${message.authorName}</a></strong><br>${message.content}`;
     } else {
       content.textContent = message.content;
     }
@@ -230,8 +230,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         const content = document.createElement("div");
         content.classList.add("bubble-content");
 
-        if (!isCurrentUser && data.authorName) {
-          content.innerHTML = `<strong>@${data.authorName}</strong><br>${data.content}`;
+        if (!isCurrentUser && data.authorName && data.userId) {
+          content.innerHTML = `<strong><a href="profile.html?uid=${data.userId}" style="color: inherit; text-decoration: none;">@${data.authorName}</a></strong><br>${data.content}`;
         } else {
           content.textContent = data.content;
         }
