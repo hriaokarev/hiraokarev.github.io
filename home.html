@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kuro-do - 次世代SNSチャット</title>
+    <title>名前募集中 - 次世代SNSチャット</title>
     <style>
         :root {
             --bg: #ffffff;
@@ -582,18 +582,25 @@
             }
         }
     </style>
-    <!-- PWA設定 -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="/manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/service-worker.js').then(function (registration) {
+          console.log('ServiceWorker registered: ', registration.scope);
+        }, function (err) {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+  </script>
 </head>
 <body>
     <div class="app-container">
         <!-- ホーム画面 -->
         <section id="home" class="section">
             <div class="header">
-                <div class="logo">Kuro-do</div>
+                <div class="logo">名前募集中</div>
                 <div style="display: flex; gap: 8px;">
                     <button style="background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;">🔍</button>
                     <button style="background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;">🔔</button>
@@ -605,7 +612,7 @@
                     <span class="notification-icon">✨</span>
                     <div>
                         <h3 style="margin-bottom: 4px; font-weight: 600;">新機能リリース</h3>
-                        <p style="color: var(--muted); font-size: 14px;">ボイスメッセージ機能が追加されました！</p>
+                        <p style="color: var(--muted); font-size: 14px;">UIを更新しました！</p>
                     </div>
                 </div>
             </div>
@@ -709,19 +716,10 @@
     </div>
 </div>
 
-</script>
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(registration => {
-          console.log('✅ ServiceWorker registered: ', registration);
-        })
-        .catch(error => {
-          console.log('❌ ServiceWorker registration failed: ', error);
-        });
+    document.getElementById("addToHomeCard").addEventListener("click", function() {
+        document.getElementById("addToHomePopup").style.display = "flex";
     });
-  }
 </script>
 </body>
 </html>
