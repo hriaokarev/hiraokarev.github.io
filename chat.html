@@ -582,6 +582,21 @@
             }
         }
     </style>
+    <style>
+      .nav-item.has-unread {
+        position: relative;
+      }
+      .nav-item.has-unread::after {
+        content: '';
+        position: absolute;
+        top: 6px;
+        right: 18px;
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+      }
+    </style>
     <link rel="manifest" href="/manifest.json">
     <script>
       if ('serviceWorker' in navigator) {

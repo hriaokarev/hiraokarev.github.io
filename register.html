@@ -550,6 +550,16 @@
             transition: transform 0.3s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
+        .nav-item.has-unread::after {
+        content: '';
+        position: absolute;
+        top: 6px;
+        right: 18px;
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        }
 
         .toggle.active::after {
             transform: translateX(24px);
@@ -729,7 +739,10 @@
       padding-bottom: 20px !important; /* 最小限の余白に変更 */
   }
 </style>
-
+<script type="module">
+  import { setupUnreadBadge } from './badge.js';
+  setupUnreadBadge();
+</script>
 </body>
 <script type="module" src="register.js"></script>
 </html>

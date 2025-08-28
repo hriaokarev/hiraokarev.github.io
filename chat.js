@@ -15,6 +15,7 @@ const chatListContainer = document.getElementById("chatList");
 function renderChatList(chats) {
   if (!chatListContainer) return;
   chatListContainer.innerHTML = "";
+  let hasUnread = false;
   chats.forEach(async (doc) => {
     const chat = doc.data();
     const otherUserId = chat.participants.find(uid => uid !== auth.currentUser.uid);
@@ -43,9 +44,17 @@ function renderChatList(chats) {
       </div>
       <div class="dm-meta">
         <div class="dm-time">${chat.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ""}</div>
-        ${chat.unread ? '<div class="unread-badge">●</div>' : ""}
+        ${(chat.unreadBy || []).includes(auth.currentUser.uid) ? '<div class="unread-badge">●</div>' : ""}
       </div>
     `;
+    // Set badge on bottom nav if any unread
+    const navChatIcon = document.querySelector('a[href="chat.html"] span');
+    if ((chat.unreadBy || []).includes(auth.currentUser.uid)) {
+      hasUnread = true;
+      if (navChatIcon) {
+        navChatIcon.parentElement.classList.add("has-unread");
+      }
+    }
     // 最新メッセージ取得
     try {
       const messagesRef = collection(docRef(db, "privateChats", doc.id), "messages");
@@ -65,6 +74,13 @@ function renderChatList(chats) {
     });
     chatListContainer.appendChild(chatItem);
   });
+  // If no unread, clear badge if present
+  setTimeout(() => {
+    const navChatLink = document.querySelector('a[href="chat.html"]');
+    if (navChatLink && !hasUnread) {
+      navChatLink.classList.remove("has-unread");
+    }
+  }, 100);
 }
 
 onAuthStateChanged(auth, (user) => {

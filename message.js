@@ -111,9 +111,27 @@ async function sendMessage() {
 
   try {
     await addDoc(collection(db, "privateChats", chatId, "messages"), message);
-    await setDoc(doc(db, "privateChats", chatId), {
-      updatedAt: firestoreServerTimestamp()
-    }, { merge: true });
+
+    // Get recipient ID
+    const chatDoc = await getDoc(doc(db, "privateChats", chatId));
+    const chatData = chatDoc.data();
+    const recipientId = chatData.participants.find(uid => uid !== auth.currentUser.uid);
+
+    // Mark as unread for the recipient (accumulate in unreadBy)
+    if (recipientId) {
+      const chatRef = doc(db, "privateChats", chatId);
+      const chatSnap = await getDoc(chatRef);
+      const chatData = chatSnap.data();
+      const currentUnread = chatData?.unreadBy || [];
+
+      // recipientId を追加（重複を除外）
+      const newUnread = Array.from(new Set([...currentUnread, recipientId]));
+
+      await setDoc(chatRef, {
+        updatedAt: firestoreServerTimestamp(),
+        unreadBy: newUnread
+      }, { merge: true });
+    }
     messageInput.value = "";
     scrollToBottom(true);
   } catch (error) {
@@ -164,6 +182,21 @@ async function displayMessages() {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     displayMessages();
+
+    // Remove current user from unreadBy
+    try {
+      const chatRef = doc(db, "privateChats", chatId);
+      const chatSnap = await getDoc(chatRef);
+      const chatData = chatSnap.data();
+      const currentUnread = chatData?.unreadBy || [];
+      const newUnread = currentUnread.filter(uid => uid !== user.uid);
+      if (newUnread.length !== currentUnread.length) {
+        await setDoc(chatRef, { unreadBy: newUnread }, { merge: true });
+      }
+    } catch (e) {
+      // ignore error
+    }
+
     // 相手の名前を取得して表示
     try {
       const chatDoc = await getDoc(doc(db, "privateChats", chatId));

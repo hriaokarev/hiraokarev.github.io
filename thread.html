@@ -250,6 +250,7 @@
             border-radius: 12px;
             transition: all 0.3s ease;
             flex: 1;
+            position: relative;
         }
 
         .nav-item:hover,
@@ -615,6 +616,16 @@
         .toggle.active::after {
             transform: translateX(24px);
         }
+        .nav-item.has-unread::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 18px;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
 
         .notification-card {
             background: linear-gradient(135deg, var(--accent-light), rgba(255, 107, 157, 0.1));
@@ -688,7 +699,7 @@
                 </svg>
                 <span>投稿</span>
             </a>
-            <a href="chat.html" class="nav-item">
+            <a href="chat.html" class="nav-item" id="nav-chat">
                 <svg class="nav-icon" viewBox="0 0 24 24">
                     <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                 </svg>
@@ -804,6 +815,10 @@
         });
       });
     </script>
+    <script type="module">
+  import { setupUnreadBadge } from './badge.js';
+  setupUnreadBadge();
+</script>
 </body>
 <script type="module" src="./thread.js"></script>
 </html>
