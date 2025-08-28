@@ -582,6 +582,11 @@
             }
         }
     </style>
+    <!-- PWA設定 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
     <div class="app-container">
@@ -704,10 +709,19 @@
     </div>
 </div>
 
+</script>
 <script>
-    document.getElementById("addToHomeCard").addEventListener("click", function() {
-        document.getElementById("addToHomePopup").style.display = "flex";
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(registration => {
+          console.log('✅ ServiceWorker registered: ', registration);
+        })
+        .catch(error => {
+          console.log('❌ ServiceWorker registration failed: ', error);
+        });
     });
+  }
 </script>
 </body>
 </html>
