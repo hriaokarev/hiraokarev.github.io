@@ -13,6 +13,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/fi
 const chatListContainer = document.getElementById("chatList");
 
 function renderChatList(chats) {
+  if (!chatListContainer) return;
   chatListContainer.innerHTML = "";
   chats.forEach(async (doc) => {
     const chat = doc.data();
@@ -33,19 +34,32 @@ function renderChatList(chats) {
     }
 
     const chatItem = document.createElement("div");
-    chatItem.className = "chat-item";
+    chatItem.className = "dm-item";
     chatItem.innerHTML = `
-      <div class="chat-left">
-        <img src="${userIcon}" class="chat-icon" />
+      <div class="dm-avatar">${userName[0] || "U"}</div>
+      <div class="dm-content">
+        <div class="dm-name">${userName}</div>
+        <div class="dm-last-message" id="lastMessage-${doc.id}">読み込み中...</div>
       </div>
-      <div class="chat-center">
-        <div class="chat-name">${userName}</div>
-        <div class="chat-message">${chat.lastMessage || ""}</div>
-      </div>
-      <div class="chat-right">
-        ${chat.unread ? '<div class="unread-mark"></div>' : ""}
+      <div class="dm-meta">
+        <div class="dm-time">${chat.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ""}</div>
+        ${chat.unread ? '<div class="unread-badge">●</div>' : ""}
       </div>
     `;
+    // 最新メッセージ取得
+    try {
+      const messagesRef = collection(docRef(db, "privateChats", doc.id), "messages");
+      const latestQuery = query(messagesRef, orderBy("createdAt", "desc"));
+      const unsubscribe = onSnapshot(latestQuery, (snap) => {
+        if (!snap.empty) {
+          const latest = snap.docs[0].data();
+          const lastMsgEl = document.getElementById(`lastMessage-${doc.id}`);
+          if (lastMsgEl) lastMsgEl.textContent = latest.content || "（メッセージなし）";
+        }
+      });
+    } catch (err) {
+      console.error("最新メッセージ取得失敗:", err);
+    }
     chatItem.addEventListener("click", () => {
       window.location.href = `message.html?chatId=${doc.id}`;
     });
@@ -64,4 +78,13 @@ onAuthStateChanged(auth, (user) => {
       renderChatList(snapshot.docs);
     });
   }
+});
+// フッターのナビゲーションバークリック遷移
+document.querySelectorAll(".footer-item").forEach((item) => {
+  item.addEventListener("click", (e) => {
+    const target = e.currentTarget.dataset.target;
+    if (target) {
+      window.location.href = target;
+    }
+  });
 });

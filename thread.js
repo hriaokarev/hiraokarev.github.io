@@ -1,7 +1,30 @@
+export function createThreadFromPopup({ name, description, genre }) {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const userId = user ? user.uid : null;
+  const authorName = user && user.displayName ? user.displayName : "未設定";
+
+  addDoc(collection(db, "threads"), {
+    name,
+    description,
+    genre,
+    createdAt: serverTimestamp(),
+    userId,
+    authorName
+  }).then(() => {
+    closeThreadPopup();
+    renderThreadList();
+  }).catch((e) => {
+    console.error("Error creating thread: ", e);
+    alert("スレッドの作成に失敗しました");
+  });
+}
 import { db } from "./firebase.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { collection as fsCollection, query, orderBy, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getCountFromServer } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getDocs, query as fsQuery, where } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 async function renderThreadList() {
   const list = document.getElementById("thread-list");
@@ -44,10 +67,32 @@ async function renderThreadList() {
           }
         }
 
+        let messageCount = 0;
+        let viewCount = 0;
+
+        try {
+          const messagesSnap = await getCountFromServer(collection(db, "threads", change.doc.id, "messages"));
+          messageCount = messagesSnap.data().count || 0;
+        } catch (e) {
+          console.error("メッセージ数取得エラー:", e);
+        }
+
+        // Removed automatic view record here
+
+        try {
+          const viewsSnap = await getCountFromServer(collection(db, "threads", change.doc.id, "views"));
+          viewCount = viewsSnap.data().count || 0;
+        } catch (e) {
+          console.error("ビュー数取得エラー:", e);
+        }
+
         card.innerHTML = `
-          <div class="meta">${escapeHtml(displayName)}・${formatTimestamp(thread.createdAt)}</div>
+          <div class="meta">${escapeHtml(displayName)}・${escapeHtml(thread.genre || "未分類")}</div>
           <div class="content" style="font-weight:bold; font-size:16px;">${escapeHtml(thread.name)}</div>
           <div class="content" style="margin-top:3px; color:#bbb;">${escapeHtml(thread.description || "")}</div>
+          <div class="content" style="margin-top:6px; font-size:13px; color:#999;">
+            👁 ${viewCount}人 見た ・ 💬 ${messageCount}件
+          </div>
         `;
 
         // Add to the top of the list
@@ -73,6 +118,7 @@ function closeThreadModal() {
 async function createThread() {
   const name = document.getElementById("thread-name-input").value.trim();
   const desc = document.getElementById("thread-desc-input").value.trim();
+  const genre = document.getElementById("thread-genre-select").value.trim();
   if (!name) {
     alert("スレッド名を入力してください");
     return;
@@ -87,6 +133,7 @@ async function createThread() {
     await addDoc(collection(db, "threads"), {
       name,
       description: desc,
+      genre,
       createdAt: serverTimestamp(),
       userId,
       authorName
@@ -107,6 +154,31 @@ function escapeHtml(str) {
 
 renderThreadList();
 
-document.getElementById("fab-button").addEventListener("click", openThreadModal);
-document.getElementById("create-thread-button").addEventListener("click", createThread);
+const fabButton = document.getElementById("fab-button");
+const createThreadButton = document.getElementById("create-thread-button");
+
+if (fabButton) {
+  fabButton.addEventListener("click", openThreadModal);
+}
+if (createThreadButton) {
+  createThreadButton.addEventListener("click", createThread);
+}
 window.closeThreadModal = closeThreadModal;
+
+function goBack() {
+  window.history.back();
+}
+window.goBack = goBack;
+
+// Export closeThreadPopup for dynamic import usage
+window.closeThreadPopup = closeThreadPopup;
+
+// フッターのナビゲーションバークリック遷移
+document.querySelectorAll(".footer-item").forEach((item) => {
+  item.addEventListener("click", (e) => {
+    const target = e.currentTarget.dataset.target;
+    if (target) {
+      window.location.href = target;
+    }
+  });
+});

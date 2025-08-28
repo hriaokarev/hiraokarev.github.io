@@ -10,7 +10,8 @@ import {
   onSnapshot,
   updateDoc,
   query,
-  orderBy
+  orderBy,
+  increment
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import {
   getAuth,
@@ -58,5 +59,6 @@ export {
   updateDoc,
   query,
   orderBy,
-  onAuthStateChanged
+  onAuthStateChanged,
+  increment
 };

@@ -1,106 +1,655 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ユーザープロフィール</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background-color: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      /* Removed justify-content: center; to allow header at top */
-      /* height: 100vh; Removed for natural scroll */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuro-do - 次世代SNSチャット</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --muted: #6b7280;
+            --accent: #ff3366;
+            --card: #f4f4f5;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --space: 20px;
+            --accent-light: rgba(255, 51, 102, 0.08);
+            --accent-medium: rgba(255, 51, 102, 0.2);
+        }
 
-    header {
-      width: 100%;
-      padding: 10px;
-      background-color: #222;
-      display: flex;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .profile-container {
-      text-align: center;
-      padding: 20px 20px 60px;
-      margin-top: 20px;
-      width: 95%;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
 
-    .avatar {
-      width: 80px;
-      height: 80px;
-      background-color: #333;
-      border-radius: 50%;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #aaa;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    .info {
-      margin: 10px 0;
-    }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
 
-    .message-btn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #27ae60;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+        .section {
+            min-height: 100vh;
+            padding: var(--space);
+            padding-bottom: 120px;
+        }
 
-    .message-btn:hover {
-      background-color: #1e8449;
-    }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-top: 20px;
+            position: relative;
+        }
+        .header-title {
+            position: absolute;
+            left: 0; right: 0;
+            text-align: center;
+            font-weight: 800;
+            font-size: 20px;
+            pointer-events: none; /* タイトルが戻るボタンを覆ってもクリックを妨げない */
+        }
+        .handle { color: var(--muted); margin-top: 6px; }
+        .info-chips { display:flex; gap:12px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+        .chip { background: var(--card); border:1px solid var(--border); border-radius: 999px; padding:6px 12px; font-size: 13px; color: var(--muted); }
+        .back-link {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1; /* タイトルより前面に */
+        }
+        .back-link:hover { background: var(--card); }
 
-    footer {
-      margin-top: 40px;
-      font-size: 12px;
-      color: #aaa;
-    }
-  </style>
-</style>
-  <link rel="manifest" href="/manifest.json" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').then(registration => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, err => {
-          console.log('ServiceWorker registration failed: ', err);
-        });
-      });
-    }
-  </script>
-  <script type="module" src="./profile.js"></script>
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: var(--space);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #e6305a;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--fg);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .input {
+            width: 100%;
+            padding: 16px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--fg);
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        .input::placeholder {
+            color: var(--muted);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(255, 51, 102, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 51, 102, 0.6);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 8px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            min-height: 52px;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+        .thread-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thread-card:hover {
+            background: #ececec;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .thread-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #ff6b9d);
+        }
+
+        .thread-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .thread-content {
+            color: var(--muted);
+            margin-bottom: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .thread-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .chat-bubble {
+            max-width: 280px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 24px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .bubble-left {
+            background: var(--card);
+            margin-right: auto;
+            border-bottom-left-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .bubble-right {
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 8px;
+        }
+
+        .bubble-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+
+        .chat-input-container {
+            position: sticky;
+            bottom: 80px;
+            background: var(--bg);
+            padding: var(--space);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            color: var(--fg);
+            font-size: 16px;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .dm-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .dm-item:hover {
+            background: var(--accent-light);
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .dm-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        .dm-content {
+            flex: 1;
+        }
+
+        .dm-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .dm-last-message {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .dm-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .dm-time {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .unread-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px;
+            background: radial-gradient(circle at center, rgba(255, 51, 102, 0.1), transparent 70%);
+        }
+
+        .app-icon {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin-bottom: 32px;
+            color: white;
+            box-shadow: 0 20px 60px rgba(255, 51, 102, 0.3);
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: var(--muted);
+            margin-bottom: 48px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--fg);
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .settings-desc {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .toggle {
+            width: 52px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        .notification-card {
+            background: linear-gradient(135deg, var(--accent-light), rgba(255, 107, 157, 0.1));
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .notification-icon {
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                border: none;
+            }
+            
+            .section {
+                padding: 16px;
+                padding-bottom: 120px;
+            }
+            
+            .fab {
+                bottom: 90px;
+                right: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <button onclick="window.history.back()" style="margin-right: 10px; padding: 5px 10px; background-color: #444; color: white; border: none; border-radius: 3px; cursor: pointer;">← 戻る</button>
-    <h2 style="margin: 0; color: white;">ユーザープレビュー</h2>
-  </header>
-  <div class="profile-container">
-    <div class="avatar">NO IMAGE</div>
-    <div class="info" id="name">名前: あああ</div>
-    <div class="info" id="region">地域: 未設定</div>
-    <div class="info" id="age">年齢: 未設定</div>
-    <button class="message-btn" id="messageButton">このユーザーにメッセージする</button>
-    <footer>PeerChat © 2025</footer>
-  </div>
+    <div class="app-container">
+        <!-- プロフィール -->
+        <section id="profile" class="section">
+            <div class="header">
+                <a href="search.html" class="back-link">＜ 戻る</a>
+                <div class="header-title" id="profileTitle">プロフィール</div>
+                <span></span>
+            </div>
+            <div class="profile-header">
+                <div class="avatar" id="avatarInitial">匿</div>
+                <h2 id="name" style="margin-bottom: 4px; font-weight: 700; font-size: 24px;">名前: 読み込み中...</h2>
+                <div class="handle" id="handle">@anonymous</div>
+                <div class="info-chips">
+                    <span class="chip" id="region">地域: 未設定</span>
+                    <span class="chip" id="age">年齢: 未設定</span>
+                </div>
+                <p id="bio" style="color: var(--muted); line-height: 1.5; margin-top: 12px;">自己紹介は未設定です</p>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-number">47</div>
+                    <div class="stat-label">投稿</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">128</div>
+                    <div class="stat-label">いいね</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">23</div>
+                    <div class="stat-label">フォロー</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 32px;">
+                <button id="messageButton" class="btn" style="flex: 1;">メッセージをおくる</button>
+                <button class="btn-secondary btn" style="flex: 1;">シェア</button>
+            </div>
+
+            <h3 style="margin-bottom: 12px; font-weight: 700;">最近のアクティビティ</h3>
+            <div id="activityList"></div>
+        </section>
+        
+</div>
+    <script type="module" src="./profile.js"></script>
 </body>
 </html>

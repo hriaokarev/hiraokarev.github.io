@@ -1,119 +1,654 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>メッセージルーム</title>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js"></script>
-  <script type="module" src="firebase.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    .header {
-      background-color: #1e1e1e;
-      padding: 12px;
-      text-align: center;
-      font-size: 18px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .chat-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-    .message-wrapper {
-      display: flex;
-      margin-bottom: 1rem;
-      width: 100%;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuro-do - 次世代SNSチャット</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --muted: #6b7280;
+            --accent: #ff3366;
+            --card: #f4f4f5;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --space: 20px;
+            --accent-light: rgba(255, 51, 102, 0.08);
+            --accent-medium: rgba(255, 51, 102, 0.2);
+            --header-h: 64px;
+            --header-bg: rgba(255, 255, 255, 0.95);
+            --input-h: 100px; /* 送信欄の高さの概算。必要に応じて調整 */
+        }
 
-    .message-wrapper.right {
-      justify-content: flex-end;
-      padding-right: 1rem;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .message-wrapper.left {
-      justify-content: flex-start;
-      padding-left: 1rem;
-    }
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
 
-    .message-bubble {
-      background-color: #1e1e1e;
-      color: #ddd;
-      padding: 0.75rem 1rem;
-      border-radius: 1rem;
-      max-width: 70%;
-      word-break: break-word;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    .message-author {
-      font-size: 0.7rem;
-      font-weight: bold;
-      color: #888;
-      margin-bottom: 2px;
-    }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
 
-    .message-content {
-      margin-bottom: 0.5rem;
-    }
+        .section {
+            min-height: 100vh;
+            padding: calc(var(--space) + var(--header-h)) var(--space) var(--space);
+            padding-bottom: 120px;
+        }
 
-    .message-meta {
-      font-size: 0.7rem;
-      text-align: right;
-      color: #aaa;
-    }
-    .input-container {
-      display: flex;
-      padding: 10px;
-      background-color: #1e1e1e;
-    }
-    .input-container input {
-      flex: 1;
-      padding: 8px;
-      border-radius: 4px;
-      border: none;
-    }
-    .input-container button {
-      margin-left: 8px;
-      padding: 8px 16px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-  </style>
-  <link rel="manifest" href="/manifest.json" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(reg => console.log('SW registered', reg))
-          .catch(err => console.log('SW registration failed', err));
-      });
-    }
-  </script>
+        .header {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px var(--space);
+            background: var(--header-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1001;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: var(--space);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #e6305a;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--fg);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .input {
+            width: 100%;
+            padding: 16px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--fg);
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        .input::placeholder {
+            color: var(--muted);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(255, 51, 102, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 51, 102, 0.6);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 8px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            min-height: 52px;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+        .thread-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thread-card:hover {
+            background: #ececec;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .thread-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #ff6b9d);
+        }
+
+        .thread-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .thread-content {
+            color: var(--muted);
+            margin-bottom: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .thread-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .chat-bubble {
+            max-width: 280px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 24px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .bubble-left {
+            background: var(--card);
+            margin-right: auto;
+            border-bottom-left-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .bubble-right {
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 8px;
+        }
+
+        .bubble-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+
+        .chat-input-container {
+    position: fixed;   /* ← fixed に変更 */
+    bottom: 0;         /* ← 画面の一番下に */
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    padding: var(--space);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    max-width: 480px;   /* スマホ中央に収める */
+    margin: 0 auto;
+}
+
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            color: var(--fg);
+            font-size: 16px;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .dm-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .dm-item:hover {
+            background: var(--accent-light);
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .dm-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        .dm-content {
+            flex: 1;
+        }
+
+        .dm-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .dm-last-message {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .dm-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .dm-time {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .unread-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px;
+            background: radial-gradient(circle at center, rgba(255, 51, 102, 0.1), transparent 70%);
+        }
+
+        .app-icon {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin-bottom: 32px;
+            color: white;
+            box-shadow: 0 20px 60px rgba(255, 51, 102, 0.3);
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: var(--muted);
+            margin-bottom: 48px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--fg);
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .settings-desc {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .toggle {
+            width: 52px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        .notification-card {
+            background: linear-gradient(135deg, var(--accent-light), rgba(255, 107, 157, 0.1));
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .notification-icon {
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                border: none;
+            }
+            
+            .section {
+                padding: 16px;
+                padding-bottom: 120px;
+            }
+            
+            .fab {
+                bottom: 90px;
+                right: 20px;
+            }
+            .header { max-width: 100%; }
+        }
+    </style>
+    <script type="module" src="./firebase.js"></script>
+    <script type="module" src="./message.js"></script>
 </head>
 <body>
-  <div class="header">
-    <button onclick="history.back()" style="position: absolute; left: 10px; top: 10px; background: none; border: none; color: white; font-size: 18px;">←</button>
-    <div id="roomTitle">メッセージ</div>
-  </div>
-  <div class="chat-container" id="messageContainer"></div>
-  <div class="input-container">
-    <input type="text" id="messageInput" placeholder="メッセージを入力..." />
-    <button id="sendBtn" onclick="sendMessage()">送信</button>
-  </div>
-  <script type="module" src="message.js"></script>
+    <div class="app-container">
+        <!-- DM会話 -->
+        <section id="dm-chat" class="section">
+            <div class="header">
+                <div style="display: flex; align-items: center;">
+                    <button onclick="window.history.back()" style="background: none; border: none; font-size: 20px; margin-right: 16px; cursor: pointer;">←</button>
+                    <div class="dm-avatar" style="width: 40px; height: 40px; font-size: 14px; margin-right: 12px;">N</div>
+                    <div>
+                        <h2 id="roomTitle" style="font-size: 18px; font-weight: 600;">読み込み中...</h2>
+                        <span style="color: var(--muted); font-size: 13px;">🟢 オンライン</span>
+                    </div>
+                </div>
+                <button style="background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;">⋮</button>
+            </div>
+
+            <div id="messageContainer" class="messages-container"></div>
+            <style>
+              .messages-container{
+                height: calc(100vh - var(--header-h) - 200px); /* 200px は入力欄や余白分の概算。必要なら微調整 */
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+                padding-right: 6px;
+                margin-bottom: var(--input-h);
+              }
+            </style>
+
+            <div class="chat-input-container">
+                <textarea id="messageInput" class="chat-input" placeholder="メッセージを入力..."></textarea>
+                <button id="sendBtn" class="send-btn">
+                    <svg class="nav-icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                        <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
+         </div>
+<script>
+  // chatId がない場合、URLに自動で付加する（開発用）
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('chatId')) {
+    params.set('chatId', 'defaultChatId123'); // 仮のID
+    window.location.search = params.toString();
+  }
+</script>
 </body>
 </html>

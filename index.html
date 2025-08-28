@@ -1,143 +1,605 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
-  <title>新規登録</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background-color: #121212;
-      color: #fff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuro-do - 次世代SNSチャット</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --muted: #6b7280;
+            --accent: #ff3366;
+            --card: #f4f4f5;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --space: 20px;
+            --accent-light: rgba(255, 51, 102, 0.08);
+            --accent-medium: rgba(255, 51, 102, 0.2);
+        }
 
-    .register-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    h2 {
-      font-size: 24px;
-      margin-bottom: 30px;
-    }
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
 
-    .register-content {
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    .icon-preview {
-      margin-bottom: 20px;
-    }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
 
-    .icon-preview img {
-      width: 80px;
-      height: 80px;
-      border-radius: 16px;
-      object-fit: cover;
-      background-color: #333;
-    }
+        .section {
+            min-height: 100vh;
+            padding: var(--space);
+            padding-bottom: 120px;
+        }
 
-    .upload-label {
-      display: block;
-      margin-top: 8px;
-      color: #ccc;
-      font-size: 14px;
-      cursor: pointer;
-    }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-top: 20px;
+        }
 
-    input[type="text"],
-    input[type="number"],
-    select {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #fff;
-      color: #000;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    button {
-      width: 100%;
-      padding: 14px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: var(--space);
+            border: 1px solid var(--border);
+        }
 
-    button:hover {
-      background-color: #43a047;
-    }
-    .selectable-image.selected {
-      border: 2px solid #4CAF50;
-    }
-</style>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#121212" />
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #e6305a;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--fg);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .input {
+            width: 100%;
+            padding: 16px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--fg);
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        .input::placeholder {
+            color: var(--muted);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(255, 51, 102, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 51, 102, 0.6);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 8px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            min-height: 52px;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+        .thread-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thread-card:hover {
+            background: #ececec;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .thread-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #ff6b9d);
+        }
+
+        .thread-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .thread-content {
+            color: var(--muted);
+            margin-bottom: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .thread-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .chat-bubble {
+            max-width: 280px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 24px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .bubble-left {
+            background: var(--card);
+            margin-right: auto;
+            border-bottom-left-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .bubble-right {
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 8px;
+        }
+
+        .bubble-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+
+        .chat-input-container {
+            position: sticky;
+            bottom: 80px;
+            background: var(--bg);
+            padding: var(--space);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            color: var(--fg);
+            font-size: 16px;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .dm-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .dm-item:hover {
+            background: var(--accent-light);
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .dm-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        .dm-content {
+            flex: 1;
+        }
+
+        .dm-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .dm-last-message {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .dm-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .dm-time {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .unread-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px;
+            background: radial-gradient(circle at center, rgba(255, 51, 102, 0.1), transparent 70%);
+        }
+
+        .app-icon {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin-bottom: 32px;
+            color: white;
+            box-shadow: 0 20px 60px rgba(255, 51, 102, 0.3);
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: var(--muted);
+            margin-bottom: 48px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--fg);
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .settings-desc {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .toggle {
+            width: 52px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        .notification-card {
+            background: linear-gradient(135deg, var(--accent-light), rgba(255, 107, 157, 0.1));
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .notification-icon {
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                border: none;
+            }
+            
+            .section {
+                padding: 16px;
+                padding-bottom: 120px;
+            }
+            
+            .fab {
+                bottom: 90px;
+                right: 20px;
+            }
+        }
+    </style>
 </head>
-<body class="register-page">
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(error => {
-            console.log('ServiceWorker registration failed:', error);
-          });
-      });
-    }
-  </script>
-  <div class="register-container">
-    <h2>ようこそ</h2>
-    <div class="register-content">
-      <div class="icon-preview">
-        <div class="image-options" style="display: flex; gap: 8px; margin-bottom: 10px;">
-          <img src="img1.png" class="selectable-image" data-img="img1.png" style="width: 60px; height: 60px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;" />
-          <img src="img2.png" class="selectable-image" data-img="img2.png" style="width: 60px; height: 60px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;" />
-          <img src="img3.png" class="selectable-image" data-img="img3.png" style="width: 60px; height: 60px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;" />
-          <img src="img4.png" class="selectable-image" data-img="img4.png" style="width: 60px; height: 60px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;" />
-        </div>
-        <img id="registerProfileImage" src="noimage.png" alt="プロフィール画像" style="width: 80px; height: 80px; border-radius: 16px; object-fit: cover;" />
-        <input type="hidden" id="selectedImage" value="noimage.png" />
-      </div>
-      <input type="text" id="registerName" placeholder="名前" />
-      <select id="registerRegion">
-        <option value="">地域を選択</option>
-        <option value="北海道">北海道</option>
-        <option value="東北">東北</option>
-        <option value="関東">関東</option>
-        <option value="中部">中部</option>
-        <option value="近畿">近畿</option>
-        <option value="中国">中国</option>
-        <option value="四国">四国</option>
-        <option value="九州">九州</option>
-        <option value="沖縄">沖縄</option>
-      </select>
-      <input type="number" id="registerAge" placeholder="年齢" />
-      <button id="registerBtn">登録する</button>
-    </div>
-  </div>
+<body>
+    <div class="app-container">
+        <!-- 初期画面 -->
+<section id="welcome" class="section welcome-screen">
+    <div class="app-icon">
+        <img src="icon-512.png" alt="アプリアイコン" style="width:100%; height:100%; border-radius:32px;">
+    </div>   <!-- ← 月の絵文字の代わりに icon-512.png を表示 -->
 
-  <!-- HTML末尾 -->
-<!-- Firebase 設定 -->
-<script type="module" src="firebase.js"></script>
+    <h1 class="welcome-title">名前募集中</h1>   <!-- ← アプリ名を「名前募集中」に変更 -->
 
-<!-- 登録処理 -->
-<script type="module" src="index.js"></script>
+    <p class="welcome-subtitle">
+        新世代の匿名SNSチャット<br>
+        本音で繋がる、新しい出会い
+    </p>
+    <a href="register.html" class="btn">始める</a>
+</section>
 </body>
+<script type="module" src="firebase.js"></script>
+<script type="module" src="index.js"></script>
 </html>

@@ -1,79 +1,731 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>設定</title>
-  <link rel="stylesheet" href="style.css" />
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="settings.js"></script>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(function (registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(function (error) {
-            console.log('ServiceWorker registration failed:', error);
-          });
-      });
-    }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuro-do - 次世代SNSチャット</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --muted: #6b7280;
+            --accent: #ff3366;
+            --card: #f4f4f5;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --space: 20px;
+            --accent-light: rgba(255, 51, 102, 0.08);
+            --accent-medium: rgba(255, 51, 102, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+
+        .section {
+            min-height: 100vh;
+            padding: var(--space);
+            padding-bottom: 120px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-top: 20px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: var(--space);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #e6305a;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--fg);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .input {
+            width: 100%;
+            padding: 16px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--fg);
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        .input::placeholder {
+            color: var(--muted);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(255, 51, 102, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 51, 102, 0.6);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 8px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            min-height: 52px;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+        .thread-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: var(--space);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thread-card:hover {
+            background: #ececec;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .thread-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #ff6b9d);
+        }
+
+        .thread-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .thread-content {
+            color: var(--muted);
+            margin-bottom: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .thread-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .chat-bubble {
+            max-width: 280px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 24px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .bubble-left {
+            background: var(--card);
+            margin-right: auto;
+            border-bottom-left-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .bubble-right {
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 8px;
+        }
+
+        .bubble-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+
+        .chat-input-container {
+            position: sticky;
+            bottom: 80px;
+            background: var(--bg);
+            padding: var(--space);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            color: var(--fg);
+            font-size: 16px;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .dm-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .dm-item:hover {
+            background: var(--accent-light);
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .dm-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        .dm-content {
+            flex: 1;
+        }
+
+        .dm-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .dm-last-message {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .dm-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .dm-time {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .unread-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px;
+            background: radial-gradient(circle at center, rgba(255, 51, 102, 0.1), transparent 70%);
+        }
+
+        .app-icon {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin-bottom: 32px;
+            color: white;
+            box-shadow: 0 20px 60px rgba(255, 51, 102, 0.3);
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: var(--muted);
+            margin-bottom: 48px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--fg);
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .settings-desc {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .toggle {
+            width: 52px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        .notification-card {
+            background: linear-gradient(135deg, var(--accent-light), rgba(255, 107, 157, 0.1));
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .notification-icon {
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                border: none;
+            }
+            
+            .section {
+                padding: 16px;
+                padding-bottom: 120px;
+            }
+            
+            .fab {
+                bottom: 90px;
+                right: 20px;
+            }
+        }
+    </style>
 </head>
-<body style="background-color: #000000; color: white; margin: 0; font-family: sans-serif;">
-  <header style="background-color: #111111; color: white; padding: 12px; text-align: center; font-size: 18px; font-weight: bold;">
-    設定
-  </header>
+<body>
+    <div class="app-container">
+        <!-- 設定 -->
+        <section id="settings" class="section">
+            <div class="header">
+                <h2 style="font-size: 24px; font-weight: 700;">設定</h2>
+            </div>
 
-  <main style="padding: 20px; padding-bottom: 100px;">
-    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 20px; max-width: 500px; margin: 0 auto;">
-      <h2 style="font-size: 16px; margin-bottom: 20px;">プロフィール編集</h2>
-      
-      <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-        <label for="profileImageInput">
-          <img id="profileImage" src="" alt="NO IMAGE" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; background-color: #444;">
-          <div style="text-align: center; font-size: 12px; margin-top: 8px;">変更</div>
-        </label>
-        <input type="file" id="profileImageInput" accept="image/*" style="display: none;" />
-      </div>
+            <div class="card">
+                <h3 style="margin-bottom: 20px; font-weight: 600;">アカウント</h3>
+                
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">プロフィール編集</div>
+                        <div class="settings-desc">表示名、自己紹介、アバターの変更</div>
+                    </div>
+                    <a href="prohensyuu.html" style="background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;">›</a>
+                </div>
 
-      <label for="settingsName" style="display: block; font-size: 14px; margin-bottom: 4px;">名前:</label>
-      <input id="settingsName" type="text" style="width: 100%; padding: 8px; margin-bottom: 16px; border: none; border-radius: 4px;" />
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">プライバシー設定</div>
+                        <div class="settings-desc">匿名レベル、表示される情報の管理</div>
+                    </div>
+                    <button style="background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;">›</button>
+                </div>
 
-      <label for="settingsRegion" style="display: block; font-size: 14px; margin-bottom: 4px;">住んでいる地域:</label>
-      <select id="settingsRegion" style="width: 100%; padding: 8px; margin-bottom: 16px; border: none; border-radius: 4px;">
-        <option value="">都道府県を選択</option>
-        <option value="北海道">北海道</option>
-        <option value="東北">東北</option>
-        <option value="関東">関東</option>
-        <option value="中部">中部</option>
-        <option value="近畿">近畿</option>
-        <option value="中国">中国</option>
-        <option value="四国">四国</option>
-        <option value="九州">九州</option>
-        <option value="沖縄">沖縄</option>
-      </select>
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">ブロック・ミュート</div>
+                        <div class="settings-desc">不快なユーザーやコンテンツの管理</div>
+                    </div>
+                    <button style="background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;">›</button>
+                </div>
+            </div>
 
-      <label for="settingsAge" style="display: block; font-size: 14px; margin-bottom: 4px;">年齢:</label>
-      <input id="settingsAge" type="number" style="width: 100%; padding: 8px; margin-bottom: 24px; border: none; border-radius: 4px;" />
+            <div class="card">
+                <h3 style="margin-bottom: 20px; font-weight: 600;">通知</h3>
+                
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">プッシュ通知</div>
+                        <div class="settings-desc">新着メッセージやいいねの通知</div>
+                    </div>
+                    <div class="toggle active"></div>
+                </div>
 
-      <button id="saveSettings" style="width: 100%; background-color: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; font-size: 14px;">
-        保存する
-      </button>
-    </div>
-  </main>
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">DM通知</div>
+                        <div class="settings-desc">ダイレクトメッセージの通知</div>
+                    </div>
+                    <div class="toggle active"></div>
+                </div>
 
-  <footer style="position: fixed; bottom: 0; width: 100%; background-color: #111111; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; align-items: center; padding: 8px 0; z-index: 9999;">
-    <div onclick="location.href='search.html'" style="color: #bbb; font-size: 18px;">🔍</div>
-    <div onclick="location.href='chat.html'" style="color: #bbb; font-size: 18px;">✉️</div>
-    <div onclick="location.href='home.html'" style="background-color: black; border-radius: 50%; padding: 6px;">
-      <div style="color: white; font-size: 20px;">🏠</div>
-    </div>
-    <div onclick="location.href='thread.html'" style="color: #bbb; font-size: 18px;">🧵</div>
-    <div onclick="location.href='settings.html'" style="color: #bbb; font-size: 18px;">⚙️</div>
-  </footer>
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">深夜モード</div>
+                        <div class="settings-desc">22:00-6:00の通知を制限</div>
+                    </div>
+                    <div class="toggle"></div>
+                </div>
+
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">メンション通知</div>
+                        <div class="settings-desc">スレッドでメンションされた時の通知</div>
+                    </div>
+                    <div class="toggle active"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 20px; font-weight: 600;">アプリ情報</h3>
+                
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">利用規約</div>
+                        <div class="settings-desc">サービス利用に関する規約</div>
+                    </div>
+                    <button style="background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;">›</button>
+                </div>
+
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">プライバシーポリシー</div>
+                        <div class="settings-desc">個人情報の取り扱いについて</div>
+                    </div>
+                    <button style="background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;">›</button>
+                </div>
+
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">ヘルプ・サポート</div>
+                        <div class="settings-desc">よくある質問、お問い合わせ</div>
+                    </div>
+                    <button style="background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer;">›</button>
+                </div>
+
+                <div class="settings-item">
+                    <div>
+                        <div class="settings-label">バージョン</div>
+                        <div class="settings-desc">Kuro-do v2.1.0</div>
+                    </div>
+                </div>
+            </div>
+
+            
+        </section>
+        <!-- ボトムナビゲーション -->
+        <!-- ボトムナビゲーション -->
+        <nav class="bottom-nav">
+            <a href="search.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M12 2a1 1 0 011 1v8h8a1 1 0 110 2h-8v8a1 1 0 11-2 0v-8H3a1 1 0 110-2h8V3a1 1 0 011-1z"/>
+                </svg>
+                <span>投稿</span>
+            </a>
+            <a href="chat.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span>DM</span>
+            </a>
+            <a href="home.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span>ホーム</span>
+            </a>
+            <a href="thread.html" class="nav-item ">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <span>スレッド</span>
+            </a>
+            <a href="settings.html" class="nav-item active">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                </svg>
+                <span>設定</span>
+            </a>
+        </nav>
+         </div>
 </body>
 </html>

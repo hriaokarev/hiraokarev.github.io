@@ -22,43 +22,76 @@ if (!chatId) {
   throw new Error("chatId missing");
 }
 
-function addMessageBubble(message, isMe) {
-  const messageWrapper = document.createElement("div");
-  messageWrapper.classList.add("message-wrapper", isMe ? "right" : "left");
-
-  const bubble = document.createElement("div");
-  bubble.classList.add("message-bubble");
-
-  const author = document.createElement("div");
-  author.classList.add("message-author");
-  if (message.authorName) {
-    author.textContent = message.authorName;
-  } else if (message.userId) {
-    const userDocRef = doc(db, "users", message.userId);
-    getDoc(userDocRef).then((docSnap) => {
-      author.textContent = docSnap.exists() ? docSnap.data().name || "名無し" : "名無し";
-    }).catch(() => {
-      author.textContent = "名無し";
+// ===== Scroll helpers & state =====
+function ensureScrollableContainer() {
+  if (!messageContainer) return;
+  const computed = window.getComputedStyle(messageContainer);
+  const hasOverflow = computed.overflowY === "auto" || computed.overflowY === "scroll";
+  const hasFixedHeight = !!messageContainer.style.height || (computed.height && computed.height !== "auto");
+  if (!hasOverflow) {
+    messageContainer.style.overflowY = "auto";
+    messageContainer.style.webkitOverflowScrolling = "touch";
+    messageContainer.style.overscrollBehavior = "contain";
+    messageContainer.style.paddingRight = messageContainer.style.paddingRight || "6px";
+  }
+  if (!hasFixedHeight) {
+    // 画面全体からヘッダーと入力欄ぶんを差し引く
+    messageContainer.style.height = "calc(100vh - var(--header-h, 64px) - 200px)";
+  }
+}
+let pinToBottom = true;
+function isAtBottom(threshold = 100) {
+  if (!messageContainer) return true;
+  return (messageContainer.scrollHeight - messageContainer.scrollTop - messageContainer.clientHeight) < threshold;
+}
+function scrollToBottom(force = false) {
+  if (!messageContainer) return;
+  const threshold = 100;
+  const atBottom = isAtBottom(threshold);
+  const containerScrollable = messageContainer.scrollHeight > messageContainer.clientHeight;
+  if (containerScrollable) {
+    if (!atBottom && !force) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      });
     });
   } else {
-    author.textContent = "名無し";
+    if (!force) {
+      const pageAtBottom = (document.documentElement.scrollHeight - window.scrollY - window.innerHeight) < threshold;
+      if (!pageAtBottom) return;
+    }
+    requestAnimationFrame(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+    });
   }
+}
+// keep pin state updated when user scrolls
+messageContainer.addEventListener("scroll", () => {
+  pinToBottom = isAtBottom(100);
+});
+
+function addMessageBubble(message, isMe) {
+  const bubble = document.createElement("div");
+  bubble.classList.add("chat-bubble", isMe ? "bubble-right" : "bubble-left");
 
   const content = document.createElement("div");
-  content.classList.add("message-content");
   content.textContent = message.content;
+  bubble.appendChild(content);
 
   const meta = document.createElement("div");
-  meta.classList.add("message-meta");
-  const createdAt = message.createdAt?.toDate?.() || new Date();
-  meta.textContent = createdAt.toLocaleString();
+  meta.classList.add("bubble-time");
 
-  bubble.appendChild(author);
-  bubble.appendChild(content);
+  const createdAt = message.createdAt instanceof Date
+    ? message.createdAt
+    : message.createdAt?.toDate?.() || new Date();
+
+  const formatted = `${createdAt.getHours()}:${String(createdAt.getMinutes()).padStart(2, '0')}`;
+  meta.textContent = formatted;
+
   bubble.appendChild(meta);
-  messageWrapper.appendChild(bubble);
-  messageContainer.appendChild(messageWrapper);
-  messageContainer.scrollTop = messageContainer.scrollHeight;
+
+  messageContainer.appendChild(bubble);
 }
 
 async function sendMessage() {
@@ -82,6 +115,7 @@ async function sendMessage() {
       updatedAt: firestoreServerTimestamp()
     }, { merge: true });
     messageInput.value = "";
+    scrollToBottom(true);
   } catch (error) {
     console.error("メッセージ送信エラー:", error);
   }
@@ -89,6 +123,13 @@ async function sendMessage() {
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("sendBtn").addEventListener("click", sendMessage);
+  ensureScrollableContainer();
+  // 初期表示は最下部へ
+  scrollToBottom(true);
+  // レイアウト変化時に下端維持（ユーザーが下端にいる場合のみ）
+  window.addEventListener("resize", () => scrollToBottom(pinToBottom));
+  const ro = new ResizeObserver(() => scrollToBottom(pinToBottom));
+  ro.observe(messageContainer);
 });
 
 async function displayMessages() {
@@ -101,13 +142,22 @@ async function displayMessages() {
     orderBy("createdAt", "asc")
   );
   onSnapshot(q, async (snapshot) => {
+    const wasAtBottom = isAtBottom(100);
     messageContainer.innerHTML = "";
-    for (const docChange of snapshot.docs) {
-      const data = docChange.data();
+    const sortedDocs = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => {
+        const timeA = a.createdAt?.toMillis?.() || 0;
+        const timeB = b.createdAt?.toMillis?.() || 0;
+        return timeA - timeB;
+      });
+
+    for (const msg of sortedDocs) {
       const currentUser = auth.currentUser;
-      const isMe = currentUser && data.userId === currentUser.uid;
-      addMessageBubble(data, isMe);
+      const isMe = currentUser && msg.userId === currentUser.uid;
+      addMessageBubble(msg, isMe);
     }
+    scrollToBottom(wasAtBottom);
   });
 }
 

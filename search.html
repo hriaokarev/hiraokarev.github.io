@@ -1,127 +1,665 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>検索</title>
-  <style>
-    body {
-      background-color: #1e1e1e;
-      color: white;
-      margin: 0;
-      font-family: sans-serif;
-      min-height: 100vh;
-    }
-    header {
-      background-color: #111111;
-      color: white;
-      padding: 12px;
-      text-align: center;
-      font-weight: bold;
-      font-size: 18px;
-    }
-    #search {
-      padding-bottom: 60px;
-      min-height: calc(100vh - 128px);
-    }
-    .thread-card {
-      background-color: #2c2c2c;
-      margin: 8px 12px;
-      padding: 12px 16px;
-      border-radius: 12px;
-    }
-    .meta {
-      font-size: 13px;
-      color: #bbb;
-      margin-bottom: 4px;
-    }
-    .content {
-      font-size: 16px;
-      font-weight: normal;
-      color: white;
-    }
-    footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      padding: 8px 0;
-      background-color: #111;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top: 1px solid #444;
-    }
-    footer img {
-      width: 24px;
-      height: 24px;
-    }
-    #post-popup {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.8);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-    }
-    #post-popup textarea {
-      width: 90%;
-      height: 100px;
-      margin-bottom: 20px;
-    }
-    #post-popup button {
-      width: 90%;
-      background-color: #ff3366;
-      border: none;
-      padding: 12px;
-      color: white;
-      font-weight: bold;
-      border-radius: 6px;
-    }
-  </style>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>つぶやき - Kuro-do</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --muted: #6b7280;
+            --accent: #ff3366;
+            --card: #f4f4f5;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --space: 20px;
+            --accent-light: rgba(255, 51, 102, 0.08);
+            --accent-medium: rgba(255, 51, 102, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--fg);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--fg);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--accent-light);
+        }
+
+        .main-content {
+            padding: 0;
+        }
+
+        .tweet-composer {
+            border-bottom: 1px solid var(--border);
+            padding: var(--space);
+        }
+
+        .composer-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .composer-input-area {
+            flex: 1;
+        }
+
+        .tweet-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px 20px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--fg);
+            resize: none;
+            font-family: inherit;
+        }
+
+        .tweet-input:focus {
+            outline: none;
+        }
+
+        .tweet-input::placeholder {
+            color: var(--muted);
+        }
+
+        .composer-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .char-counter {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+
+        .char-counter.danger {
+            color: #ef4444;
+        }
+
+        .tweet-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 8px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+            height: 36px;
+        }
+
+        .tweet-btn:hover:not(:disabled) {
+            background: #e6305a;
+        }
+
+        .tweet-btn:disabled {
+            background: var(--muted);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .tweet-feed {
+            padding: 0;
+        }
+
+        .tweet-card {
+            border-bottom: 1px solid var(--border);
+            padding: 16px;
+            transition: background 0.2s ease;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .tweet-card:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .tweet-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .tweet-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .tweet-user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .tweet-username {
+            font-weight: 700;
+            color: var(--fg);
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .tweet-username:hover {
+            text-decoration: underline;
+        }
+
+        .tweet-handle {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .tweet-time {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .tweet-content {
+            margin-left: 52px;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--fg);
+            margin-bottom: 12px;
+        }
+
+        .tweet-actions {
+            margin-left: 52px;
+            display: flex;
+            gap: 24px;
+            max-width: 300px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 24px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .action-icon {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+         .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 8px;
+            z-index: 1000;
+        }
+
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            min-height: 52px;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                border: none;
+            }
+            
+            .tweet-composer {
+                padding: 16px;
+            }
+            
+            .tweet-card {
+                padding: 16px;
+            }
+        }
+        @keyframes popupFade {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        /* New popup styles */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .popup-overlay.active {
+            display: flex;
+        }
+        .popup-content {
+            background: #ffffff;
+            padding: 32px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popupFade 0.3s ease;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        .popup-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--fg);
+        }
+        .popup-body textarea {
+            width: 100%;
+            height: 100px;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            resize: none;
+            font-family: inherit;
+            color: var(--fg);
+            background: var(--bg);
+        }
+        .popup-body textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+        .popup-footer {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+        }
+        .popup-char-counter {
+            color: var(--muted);
+            font-size: 14px;
+            margin-right: auto;
+            user-select: none;
+        }
+        .popup-char-counter.warning {
+            color: #f59e0b;
+        }
+        .popup-char-counter.danger {
+            color: #ef4444;
+        }
+        .popup-btn {
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: none;
+            font-family: inherit;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        .popup-btn.cancel {
+            background: #ccc;
+            color: #333;
+        }
+        .popup-btn.cancel:hover {
+            background: #b3b3b3;
+        }
+        .popup-btn.post {
+            background: var(--accent);
+            color: white;
+        }
+        .popup-btn.post:hover:not(:disabled) {
+            background: #e6305a;
+        }
+        .popup-btn.post:disabled {
+            background: var(--muted);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 480px) {
+            .popup-content {
+                padding: 24px;
+                width: 95%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>検索</header>
-  <div id="search" class="section"></div>
+    <div class="app-container">
+        <!-- ヘッダー -->
+        <div class="header">
+            
+            <h1>つぶやき</h1>
+            <div></div>
+        </div>
 
-  <div id="post-popup">
-    <div style="display: flex; flex-direction: column; align-items: center;">
-      <textarea id="post-content" placeholder="いまどうしてる？"></textarea>
-      <button onclick="submitPost()">投稿</button>
-    </div>
-  </div>
+        
 
-  <footer style="position: fixed; bottom: 0; width: 100%; background-color: #111111; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; align-items: center; padding: 8px 0; z-index: 9999;">
-    <div onclick="location.href='search.html'" style="color: #bbb; font-size: 18px;">🔍</div>
-    <div onclick="location.href='chat.html'" style="color: #bbb; font-size: 18px;">✉️</div>
-    <div onclick="location.href='home.html'" style="background-color: black; border-radius: 50%; padding: 6px;">
-      <div style="color: white; font-size: 20px;">🏠</div>
-    </div>
-    <div onclick="location.href='thread.html'" style="color: #bbb; font-size: 18px;">🧵</div>
-    <div onclick="location.href='settings.html'" style="color: #bbb; font-size: 18px;">⚙️</div>
-  </footer>
-  <div onclick="openPostPopup()" style="position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background-color: #ff3366; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; color: white; z-index: 9999; cursor: pointer;">
-    ＋
-  </div>
-  <!-- Add firebase.js and search.js before closing body tag -->
-  <script type="module" src="./firebase.js"></script>
-  <script type="module" src="./search.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(registration => {
-          console.log('ServiceWorker registered: ', registration);
-        })
-        .catch(error => {
-          console.log('ServiceWorker registration failed: ', error);
+            <!-- つぶやき一覧 -->
+            <div class="tweet-feed" id="search">
+                <!-- 投稿はここにJSから挿入 -->
+            </div>
+        </div>
+
+        <!-- ボトムナビゲーション -->
+        <nav class="bottom-nav">
+            <a href="search.html" class="nav-item active">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M12 2a1 1 0 011 1v8h8a1 1 0 110 2h-8v8a1 1 0 11-2 0v-8H3a1 1 0 110-2h8V3a1 1 0 011-1z"/>
+                </svg>
+                <span>投稿</span>
+            </a>
+            <a href="chat.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span>DM</span>
+            </a>
+            <a href="home.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span>ホーム</span>
+            </a>
+            <a href="thread.html" class="nav-item ">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <span>スレッド</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                </svg>
+                <span>設定</span>
+            </a>
+        </nav>
+         </div>
+
+    <script>
+        // 文字数カウンターとボタンの有効化
+        const tweetInput = document.querySelector('.tweet-input');
+        const charCounter = document.querySelector('.char-counter');
+        const tweetBtn = document.querySelector('.tweet-btn');
+
+        tweetInput.addEventListener('input', function() {
+            const length = this.value.length;
+            charCounter.textContent = `${length} / 280`;
+            
+            // 文字数に応じてスタイル変更
+            charCounter.className = 'char-counter';
+            if (length > 250) {
+                charCounter.classList.add('warning');
+            }
+            if (length > 270) {
+                charCounter.classList.add('danger');
+            }
+            
+            // ボタンの有効化/無効化
+            tweetBtn.disabled = length === 0 || length > 280;
         });
+
+        // つぶやきボタンのクリック処理（デモ用）
+        tweetBtn.addEventListener('click', function() {
+            if (!this.disabled) {
+                alert('つぶやきが投稿されました！（デモ）');
+                tweetInput.value = '';
+                charCounter.textContent = '0 / 280';
+                charCounter.className = 'char-counter';
+                this.disabled = true;
+            }
+        });
+
+        // テキストエリアの高さ自動調整
+        tweetInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+    </script>
+
+  <!-- 投稿ボタン -->
+  <button onclick="openPopup()" style="
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 32px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 1000;
+  ">＋</button>
+
+  <!-- 新しい投稿ポップアップ -->
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup-content" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
+      <div class="popup-header" id="popupTitle">投稿</div>
+      <div class="popup-body">
+        <textarea id="popupTextarea" maxlength="280" placeholder="つぶやきを入力してください..."></textarea>
+      </div>
+      <div class="popup-footer">
+        <div class="popup-char-counter" id="popupCharCounter">0 / 280</div>
+        <button class="popup-btn cancel" id="popupCancelBtn" type="button">キャンセル</button>
+        <button class="popup-btn post" id="popupPostBtn" type="button" disabled>送信</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const popupOverlay = document.getElementById('popupOverlay');
+  const popupTextarea = document.getElementById('popupTextarea');
+  const popupCharCounter = document.getElementById('popupCharCounter');
+  const popupPostBtn = document.getElementById('popupPostBtn');
+  const popupCancelBtn = document.getElementById('popupCancelBtn');
+
+  function openPopup() {
+    popupOverlay.classList.add('active');
+    popupTextarea.value = '';
+    popupCharCounter.textContent = '0 / 280';
+    popupCharCounter.className = 'popup-char-counter';
+    popupPostBtn.disabled = true;
+    popupTextarea.focus();
+  }
+
+  function closePopup() {
+    popupOverlay.classList.remove('active');
+  }
+
+  popupTextarea.addEventListener('input', () => {
+    const length = popupTextarea.value.length;
+    popupCharCounter.textContent = `${length} / 280`;
+    popupCharCounter.className = 'popup-char-counter';
+    if (length > 250) {
+      popupCharCounter.classList.add('warning');
     }
-  </script>
+    if (length > 270) {
+      popupCharCounter.classList.add('danger');
+    }
+    popupPostBtn.disabled = length === 0 || length > 280;
+
+    // auto resize
+    popupTextarea.style.height = 'auto';
+    popupTextarea.style.height = Math.min(popupTextarea.scrollHeight, 200) + 'px';
+  });
+
+  popupCancelBtn.addEventListener('click', () => {
+    closePopup();
+  });
+
+  popupPostBtn.addEventListener('click', () => {
+    if (!popupPostBtn.disabled) {
+      submitPost();
+    }
+  });
+
+  function submitPost() {
+    const content = popupTextarea.value.trim();
+    if (content.length === 0 || content.length > 280) return;
+
+    import('./search.js').then(module => {
+        if (typeof module.submitPostToFirebase === 'function') {
+            module.submitPostToFirebase(content).then(() => {
+                closePopup();
+            }).catch(err => {
+                console.error("投稿エラー:", err);
+                alert('投稿に失敗しました');
+            });
+        } else {
+            console.error('submitPostToFirebase が見つかりません');
+        }
+    });
+  }
+
+  // Close popup on overlay click
+  popupOverlay.addEventListener('click', (e) => {
+    if (e.target === popupOverlay) {
+      closePopup();
+    }
+  });
+
+  // Close popup on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && popupOverlay.classList.contains('active')) {
+      closePopup();
+    }
+  });
+</script>
+<script type="module" src="firebase.js"></script>
+<script type="module" src="search.js"></script>
 </body>
 </html>

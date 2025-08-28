@@ -1,10 +1,21 @@
-import { db, auth, doc, setDoc, onAuthStateChanged } from './firebase.js';
+import { db, auth } from './firebase.js';
+import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // ✅ すでにログインしてる場合はホームに飛ばす
-  onAuthStateChanged(auth, (user) => {
+  // ✅ すでにログインしてる場合はホームに飛ばす（ユーザーデータがあるか確認）
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-      window.location.href = 'home.html';
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        // ユーザーデータが存在する場合はホームへリダイレクト
+        window.location.href = 'home.html';
+      } else {
+        // 存在しない場合は登録フォームを表示（何もしない）
+        console.log('ユーザーデータが見つかりません。新規登録画面を表示します。');
+      }
     }
   });
 
@@ -31,12 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const registerButton = document.getElementById('registerBtn');
   if (registerButton) {
     registerButton.addEventListener('click', () => {
-      saveProfile(true);
+      saveProfile();
     });
   }
 });
 
-async function saveProfile(isNew) {
+async function saveProfile() {
   const name = document.getElementById('registerName').value;
   const region = document.getElementById('registerRegion').value;
   const age = document.getElementById('registerAge').value;
@@ -50,13 +61,19 @@ async function saveProfile(isNew) {
       return;
     }
 
-    await setDoc(doc(db, "users", user.uid), {
-      name,
-      region,
-      age,
-      profileImage,
+    const userRef = doc(db, "users", user.uid);
+    const existingDoc = await getDoc(userRef);
+
+    const userData = {
+      name: name || "",
+      region: region || "",
+      age: age || "",
+      profileImage: profileImage || "",
+      createdAt: existingDoc.exists() ? existingDoc.data().createdAt : new Date(),
       updatedAt: new Date()
-    });
+    };
+
+    await setDoc(userRef, userData, { merge: true });
 
     alert("登録が完了しました！");
     window.location.href = "home.html";
